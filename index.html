@@ -1,0 +1,2350 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>印相 · 原型</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Noto+Serif+SC:wght@700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #231F20;
+    --terra: #BB4430;
+    --teal: #7EBDC2;
+    --sand: #F3DFA2;
+    --paper: #F4F6F8;
+    --paper-2: #E7EAEF;
+    --muted: rgba(28, 28, 30, 0.48);
+    --card: #FFFFFF;
+    --white: #FFFFFF;
+    --line: rgba(35, 31, 32, 0.12);
+    --strength: 64;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    color: var(--ink);
+    background: var(--paper);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Noto Sans SC", sans-serif;
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  img { max-width: 100%; }
+
+  .bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 18px;
+    background: var(--paper);
+    color: var(--ink);
+    border-bottom: 1px solid var(--line);
+  }
+  .logo {
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    white-space: nowrap;
+  }
+  .logo small {
+    font-weight: 500;
+    letter-spacing: 0;
+    color: rgba(35, 31, 32, 0.55);
+    margin-left: 8px;
+  }
+  .seg { display: flex; padding: 3px; background: var(--paper-2); border-radius: 999px; }
+  .seg button, .modes button, .toggle button {
+    border: 0;
+    background: transparent;
+    border-radius: 999px;
+    padding: 6px 14px;
+  }
+  .seg button.on { background: var(--ink); color: var(--paper); font-weight: 650; }
+  .modes button.on, .toggle button.on { background: var(--terra); color: var(--paper); }
+  .hint { margin-left: auto; font-size: 12px; color: rgba(35, 31, 32, 0.55); }
+
+  .stage { position: relative; z-index: 1; min-height: calc(100vh - 52px); }
+  .app-stage {
+    display: grid;
+    place-items: center;
+    padding: 18px 16px 28px;
+  }
+  .phone {
+    width: 390px;
+    height: min(820px, calc(100vh - 88px));
+    background: var(--paper);
+    color: var(--ink);
+    border: 0;
+    border-radius: 32px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+  .status {
+    height: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 18px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .screen {
+    flex: 1; overflow: auto; min-height: 0; padding: 0 16px 16px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+  .tabbar {
+    height: 64px;
+    margin: 0 14px 12px;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto 1fr 1fr;
+    align-items: center;
+    border-top: 0;
+    border-radius: 34px;
+    background: #1C1C1E;
+    box-shadow: 0 14px 32px rgba(20, 20, 24, 0.16);
+    padding: 0 4px;
+    position: relative;
+    z-index: 8;
+  }
+  .tabbar .tab {
+    border: 0;
+    background: transparent;
+    height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    font-size: 10px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.46);
+  }
+  .tabbar .tab.on { color: white; font-weight: 650; }
+  .tabbar svg { display: block; }
+  .tab-main {
+    width: 64px;
+    border: 0;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    margin-top: -20px;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .plus {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--teal);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+    font-size: 30px;
+    line-height: 1;
+    font-weight: 400;
+  }
+  .tab-main.on .plus { box-shadow: inset 0 0 0 2px var(--paper), 0 0 0 2px var(--teal); }
+  .feed {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 10px;
+    row-gap: 18px;
+    align-items: start;
+  }
+  .feed-card {
+    min-width: 0;
+    background: transparent;
+    color: var(--ink);
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .feed-shot {
+    display: block;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    border: 0;
+    padding: 0;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #E7EAEF;
+    position: relative;
+  }
+  .feed-shot > img,
+  .feed-shot .swatch,
+  .feed-shot .grade {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+  .feed-shot .grade img.base {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+  .feed-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 2px 8px;
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+  .feed-name span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .feed-go {
+    width: 100%;
+    height: 34px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--terra);
+    color: white;
+    font-size: 13px;
+    font-weight: 650;
+  }
+  .grade { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  .grade img.base { width: 100%; height: 100%; object-fit: cover; object-position: 22% center; display: block; }
+  .same-lock { height: 220px; border-radius: 8px; overflow: hidden; margin-bottom: 14px; background: #E6E6E8; }
+  .same-lock img, .same-lock .swatch, .same-lock .grade { width: 100%; height: 100%; object-fit: cover; object-position: center center; display: block; }
+  .score-tile { border: 0; text-align: left; display: block; width: 100%; }
+  .score-n {
+    margin: 10px 4px 0;
+    min-height: 26px;
+    font-family: Fraunces, Georgia, "Songti SC", serif;
+    font-size: 26px;
+    font-weight: 650;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--terra);
+  }
+  .score-v {
+    margin: 4px 2px 0;
+    height: 2.8em;
+    font-size: 12px;
+    line-height: 1.4;
+    color: rgba(22, 22, 22, 0.72);
+    overflow: hidden;
+  }
+  .score-photo { height: 220px; border-radius: 22px; overflow: hidden; background: #E6E6E8; }
+  .score-photo img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; display: block; }
+  .score-head { display: flex; gap: 12px; align-items: center; margin: 12px 2px; }
+  .score-head b { font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 34px; font-weight: 650; letter-spacing: -0.045em; line-height: 1; color: var(--terra); }
+  .score-mine b { color: var(--terra); }
+  .score-head p { margin: 0; font-size: 14px; line-height: 1.4; }
+  .score-bars { padding: 4px 12px; margin-top: 0; }
+  .score-mine {
+    width: 100%; display: flex; gap: 12px; align-items: center;
+    border: 0; background: transparent; text-align: left; padding: 10px 12px;
+  }
+  .score-mine img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; flex: none; }
+  .score-mine b { display: block; font-size: 22px; line-height: 1; }
+  .score-mine em { display: block; margin-top: 4px; font-style: normal; font-size: 13px; line-height: 1.35; color: rgba(22, 22, 22, 0.68); }
+  .grid-style .shot { aspect-ratio: 3/4; }
+  .frow {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    border-bottom: 1px solid var(--line);
+  }
+  .frow .thumb { width: 48px; height: 48px; border-radius: 8px; overflow: hidden; flex: none; }
+  .frow strong { display: block; font-size: 15px; font-weight: 600; }
+  .frow em { display: block; margin-top: 2px; font-style: normal; font-size: 12px; color: rgba(22, 22, 22, 0.5); }
+  .group .frow:last-child { border-bottom: 0; }
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    height: auto;
+    margin: 0 -16px 14px;
+    padding: 12px 16px 8px;
+    background: var(--paper);
+  }
+  .nav-title {
+    margin: 0;
+    min-width: 0;
+    text-align: left;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    color: var(--ink);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .nav-back, .nav-side {
+    border: 0;
+    background: transparent;
+    flex: none;
+    min-height: 44px;
+    text-align: left;
+    padding: 0 8px 0 0;
+    font-size: 15px;
+    color: var(--ink);
+  }
+  .flist { display: flex; flex-direction: column; gap: 10px; }
+  .fban {
+    position: relative;
+    aspect-ratio: 3.2 / 1;
+    height: auto;
+    border-radius: 20px;
+    overflow: hidden;
+    background: var(--ink);
+    color: white;
+  }
+  .tone-teal, .tone-sand, .tone-terra { color: var(--paper); }
+  .fban-main {
+    position: absolute;
+    inset: 0;
+    display: block;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+  }
+  .fban-copy {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+    width: 52%;
+    padding: 12px 4px 28px 14px;
+  }
+  .fban-copy strong {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+  }
+  .fban-copy span {
+    margin-top: 2px;
+    font-size: 12px;
+    line-height: 1.3;
+    opacity: 0.82;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .fban-visual { position: absolute; inset: 0; }
+  .fban-visual .grade { position: absolute; inset: 0; }
+  .fban-visual .grade img.base { width: 100%; height: 100%; object-fit: cover; object-position: center center; }
+  .fban-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, rgba(20, 20, 24, 0.72) 0%, rgba(20, 20, 24, 0.18) 42%, transparent 64%);
+    pointer-events: none;
+  }
+  .fban-foot {
+    position: absolute;
+    left: 14px;
+    bottom: 10px;
+    z-index: 2;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    pointer-events: none;
+  }
+  .fban-foot b {
+    font-size: 15px;
+    font-weight: 650;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .fban-foot button {
+    pointer-events: auto;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    font-size: 13px;
+    font-weight: 650;
+  }
+  .zone { margin: 4px 0 18px; }
+  .zone-head { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 8px; }
+  .zone-head h2 { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 700; letter-spacing: -0.03em; color: var(--ink); }
+  .mark {
+    width: 28px; height: 28px; border-radius: 9px;
+    display: inline-grid; place-items: center; flex: none; color: var(--ink);
+  }
+  .mark svg { width: 16px; height: 16px; display: block; }
+  .mark.sm { width: 22px; height: 22px; border-radius: 7px; }
+  .mark.sm svg { width: 13px; height: 13px; }
+  .mark.sand { background: var(--sand); color: var(--terra); }
+  .mark.teal { background: var(--teal); color: var(--ink); }
+  .mark.terra { background: var(--terra); color: white; }
+  .mark.ink { background: var(--ink); color: var(--sand); }
+  .score-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 18px; }
+  .score-act {
+    display: flex; align-items: center; gap: 8px;
+    border: 0; background: white; color: var(--ink);
+    border-radius: 16px; padding: 10px 12px;
+    box-shadow: 0 8px 22px rgba(28, 32, 48, 0.06);
+    font-size: 14px; font-weight: 650; text-align: left;
+  }
+  .pile { display: flex; flex-direction: column; }
+  .pile-back {
+    display: flex; align-items: center; gap: 8px;
+    height: 62px; border: 0; border-radius: 16px;
+    margin: 0 16px -24px; padding: 0 12px 22px;
+    text-align: left; position: relative; color: var(--ink);
+  }
+  .pile-back:nth-child(1) { z-index: 1; background: var(--sand); margin-left: 26px; margin-right: 26px; }
+  .pile-back:nth-child(2) { z-index: 2; background: var(--teal); margin-left: 12px; margin-right: 12px; }
+  .pile-back em { font-style: normal; font-size: 13px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pile-back b { margin-left: auto; font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 18px; font-weight: 650; letter-spacing: -0.04em; }
+  .pile-front {
+    z-index: 3; position: relative;
+    display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center;
+    border: 0; background: white; color: var(--ink);
+    border-radius: 22px; padding: 12px; text-align: left;
+    box-shadow: 0 14px 32px rgba(28, 32, 48, 0.08);
+  }
+  .pile-front img { width: 96px; height: 124px; object-fit: cover; border-radius: 14px; }
+  .pile-front small { display: block; font-size: 11px; letter-spacing: 0.08em; color: var(--muted); }
+  .pile-front b { display: block; margin-top: 2px; font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 32px; font-weight: 650; letter-spacing: -0.045em; line-height: 1; color: var(--terra); }
+  .pile-front p { margin: 6px 0 0; font-size: 13px; line-height: 1.4; color: rgba(28, 28, 30, 0.72); }
+  .upload-lead { margin: 2px 2px 14px; font-size: 14px; line-height: 1.45; color: rgba(28, 28, 30, 0.68); }
+  .album { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .album-shot {
+    display: block; width: 100%; aspect-ratio: 3 / 4;
+    border: 0; padding: 0; border-radius: 16px; overflow: hidden; background: #E7EAEF;
+  }
+  .album-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .pick-list { display: flex; flex-direction: column; gap: 10px; }
+  .pick-photo {
+    display: flex; align-items: center; gap: 12px;
+    border: 0; background: white; color: var(--ink);
+    border-radius: 18px; padding: 8px;
+    box-shadow: 0 8px 22px rgba(28, 32, 48, 0.06);
+    text-align: left;
+  }
+  .pick-photo img { width: 64px; height: 80px; object-fit: cover; border-radius: 12px; flex: none; }
+  .pick-photo strong { display: block; font-size: 15px; }
+  .pick-photo em { display: block; margin-top: 2px; font-style: normal; font-size: 12px; color: var(--muted); }
+  .pick-photo > span { flex: 1; min-width: 0; }
+  .pick-photo .mark { flex: none; margin-left: auto; }
+  .tip-card {
+    display: flex; gap: 10px; align-items: flex-start;
+    border-radius: 18px; padding: 14px; margin-bottom: 10px; color: var(--ink);
+  }
+  .tip-card strong { display: block; font-size: 15px; }
+  .tip-card p { margin: 4px 0 0; font-size: 13px; line-height: 1.4; }
+  .tip-card.sand { background: var(--sand); }
+  .tip-card.teal { background: var(--teal); }
+  .tip-card.terra { background: var(--terra); color: white; }
+  .tip-card.ink { background: var(--ink); color: white; }
+  .tip-card .mark { background: white; color: var(--ink); }
+  .zone-head p { margin: 2px 0 0; font-size: 12px; color: rgba(35, 31, 32, 0.55); }
+  .text-btn { border: 0; background: transparent; color: var(--terra); font-size: 15px; min-height: 44px; padding: 0 2px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 10px; }
+  .rcard { border: 0; background: transparent; padding: 0; text-align: left; }
+  .shot { position: relative; aspect-ratio: 1/1; border-radius: 20px; overflow: hidden; background: #E7EAEF; }
+  .shot img, .shot .swatch { width: 100%; height: 100%; object-fit: cover; }
+  .rcard strong { display: block; margin-top: 6px; font-size: 13px; font-weight: 600; }
+  .hintline { margin: 4px 2px 12px; font-size: 13px; line-height: 1.4; color: rgba(35, 31, 32, 0.68); }
+  .group { background: var(--card); color: var(--ink); border-radius: 22px; overflow: hidden; margin-top: 12px; box-shadow: 0 10px 28px rgba(28, 32, 48, 0.06); }
+  .group .list-btn { padding: 13px 14px; }
+  .group .list-btn:last-child { border-bottom: 0; }
+  .profile { display: flex; gap: 12px; align-items: center; padding: 4px 2px 2px; }
+  .avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--teal); color: var(--ink);
+    display: grid; place-items: center; font-weight: 600;
+  }
+  .profile p { margin: 2px 0 0; font-size: 13px; color: rgba(35, 31, 32, 0.62); }
+  .empty { margin: 0; padding: 12px 14px; font-size: 13px; color: rgba(22, 22, 22, 0.45); }
+  .detail-shot { height: 228px; aspect-ratio: auto; margin-bottom: 12px; }
+  .dock { margin-top: 8px; }
+
+  .eyebrow {
+    margin: 0 0 8px;
+    font-family: "Archivo Black", "PingFang SC", sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    color: var(--terra);
+  }
+  h1.display {
+    margin: 0;
+    font-size: 40px;
+    line-height: 0.92;
+    letter-spacing: -0.045em;
+    font-weight: 700;
+  }
+  .lead { margin: 12px 0 0; font-size: 14px; color: rgba(35, 31, 32, 0.72); }
+  .duo { display: flex; gap: 8px; margin-top: 18px; }
+  .ink {
+    flex: 1;
+    border: 0;
+    border-radius: 999px;
+    padding: 12px 10px;
+    font-weight: 650;
+  }
+  .ink.blue { background: var(--teal); color: var(--ink); }
+  .ink.orange { background: var(--sand); color: var(--ink); }
+  .ink.ghost { background: transparent; border: 1px solid rgba(22, 22, 22, 0.2); }
+  .mark.ink { flex: none; width: 28px; height: 28px; padding: 0; border-radius: 9px; }
+  .mark.sm.ink { width: 22px; height: 22px; border-radius: 7px; }
+  .section-label {
+    margin: 22px 0 10px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    font-weight: 650;
+  }
+  .rail { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 6px; }
+  .tcard {
+    width: 132px;
+    flex: none;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    text-align: left;
+  }
+  .art {
+    height: 176px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+    background: var(--sand);
+  }
+  .art img, .swatch, .hero-art img, .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  img.hide-notes { object-position: center top; transform: scale(1.38); transform-origin: center top; }
+  .swatch { position: relative; }
+  .swatch span {
+    position: absolute;
+    left: 12px;
+    bottom: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+  .sun {
+    color: var(--ink);
+    background:
+      radial-gradient(circle at 72% 30%, rgba(255,255,255,.75) 0 14%, transparent 15%),
+      linear-gradient(165deg, var(--sand), #E7C56A 58%, #C4A15A);
+  }
+  .plain {
+    color: var(--ink);
+    background:
+      linear-gradient(#C9C1B4, #C9C1B4) 14px 22% / 62% 1px no-repeat,
+      linear-gradient(#C9C1B4, #C9C1B4) 14px 32% / 40% 1px no-repeat,
+      #E7E1D6;
+  }
+  .comic {
+    color: var(--ink);
+    background:
+      repeating-linear-gradient(-18deg, transparent 0 10px, rgba(35,31,32,.18) 10px 11px),
+      var(--teal);
+  }
+  .pill {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: var(--paper);
+    border-radius: 999px;
+    font-size: 10px;
+    padding: 3px 7px;
+    font-weight: 650;
+  }
+  .tcard strong { display: block; margin-top: 8px; font-size: 13px; }
+  .tcard em { display: block; margin-top: 2px; font-style: normal; font-size: 11px; color: rgba(22, 22, 22, 0.55); }
+
+  .back {
+    border: 0;
+    background: transparent;
+    padding: 0 0 8px;
+    font-size: 13px;
+    color: rgba(35, 31, 32, 0.62);
+  }
+  .hero-art { height: 280px; border-radius: 18px; overflow: hidden; position: relative; background: var(--sand); }
+  .hero-art img { width: 100%; height: 100%; object-fit: cover; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+  .chip {
+    border: 0;
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 12px;
+    background: #E7F3F4;
+    color: var(--ink);
+  }
+  .btn {
+    width: 100%;
+    border: 0;
+    border-radius: 999px;
+    padding: 14px 16px;
+    font-weight: 650;
+    background: var(--terra);
+    color: var(--paper);
+  }
+  .btn.orange { background: var(--terra); color: var(--paper); }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid rgba(35, 31, 32, 0.28); }
+  .btn.dark { background: var(--terra); color: var(--paper); }
+  .stack-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+
+  .modes { display: flex; padding: 3px; background: var(--paper-2); color: var(--ink); border-radius: 999px; margin: 8px 0 14px; }
+  .modes button { flex: 1; font-size: 13px; font-weight: 600; }
+  .slot {
+    width: 100%;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    text-align: left;
+    border: 1px dashed rgba(35, 31, 32, 0.28);
+    background: transparent;
+    color: var(--ink);
+    border-radius: 16px;
+    padding: 10px;
+    margin-bottom: 8px;
+  }
+  .slot.filled { border-style: solid; border-color: transparent; background: white; color: var(--ink); }
+  .slot .thumb {
+    width: 54px;
+    height: 68px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--sand);
+    flex: none;
+    position: relative;
+  }
+  .slot .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .slot .k { display: block; font-size: 11px; letter-spacing: 0.06em; color: inherit; opacity: 0.65; }
+  .slot strong { display: block; margin-top: 2px; }
+  .note { font-size: 13px; color: rgba(22, 22, 22, 0.7); margin: 8px 0 14px; }
+  .slider { margin: 8px 0 4px; }
+  .slider header { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+  input[type="range"] { width: 100%; accent-color: var(--terra); }
+
+  .parse h2 { margin: 8px 0 12px; font-size: 22px; font-weight: 600; letter-spacing: 0; line-height: 1.2; }
+  .parse li { margin: 8px 0; list-style: none; padding-left: 16px; position: relative; color: rgba(35, 31, 32, 0.38); }
+  .parse li::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; position: absolute; left: 0; top: 0.5em; }
+  .parse li.on { color: var(--ink); }
+  .parse li.on::before { background: var(--terra); }
+
+  .row-between { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+  .toggle { display: flex; padding: 3px; background: var(--paper-2); color: var(--ink); border-radius: 999px; }
+  .toggle button { padding: 5px 10px; font-size: 12px; }
+  .frame-art { height: 248px; border-radius: 18px; overflow: hidden; position: relative; background: #d9d3c6; }
+  .frame-art img.base { width: 100%; height: 100%; object-fit: cover; object-position: center 12%; display: block; }
+  .dots, .fx { pointer-events: none; }
+  .dots {
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(circle, rgba(1, 64, 145, 0.9) 1px, transparent 1.15px);
+    background-size: 4px 4px;
+    mix-blend-mode: multiply;
+    opacity: calc(var(--strength) / 190);
+  }
+  .g-paper .base { filter: sepia(0.4) hue-rotate(188deg) saturate(1.9) contrast(1.06) brightness(1.12); }
+  .g-sing .base { filter: saturate(1.25) contrast(1.2) hue-rotate(205deg) brightness(0.92); }
+  .g-fly .base { filter: sepia(0.4) hue-rotate(335deg) saturate(1.7) contrast(1.12); }
+  .g-sun .base { filter: sepia(0.55) saturate(1.4) hue-rotate(350deg) contrast(1.05) brightness(1.08); }
+  .g-plain .base { filter: saturate(0.9) contrast(1.03); }
+  .g-comic .base { filter: contrast(1.35) saturate(0.75); }
+  .is-raw .base { filter: none !important; }
+  .is-raw .dots, .is-raw .fx { display: none; }
+
+  .poster { position: absolute; inset: 0; }
+  .poster .base { position: absolute; }
+  .poster-sing { background: #013F90; }
+  .poster-sing img.base {
+    width: 74%;
+    height: 68%;
+    left: 8%;
+    top: 16%;
+    object-position: center 8%;
+    border-radius: 70px 16px 64px 18px;
+    transform: rotate(-8deg);
+    filter: grayscale(1) contrast(1.35);
+    object-fit: cover;
+  }
+  .poster-sing .dots {
+    background-image: radial-gradient(circle, rgba(239, 120, 34, 0.95) 1.05px, transparent 1.2px);
+    mix-blend-mode: multiply;
+    opacity: calc(var(--strength) / 100);
+  }
+  .word {
+    position: absolute;
+    z-index: 2;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    line-height: 0.84;
+  }
+  .poster-sing .word { right: 12px; top: 14px; color: white; font-size: 58px; }
+  .poster-day { background: #F3EEE4; }
+  .poster-day .base { filter: sepia(0.25) hue-rotate(185deg) saturate(1.8) contrast(1.05) brightness(1.08); }
+  .poster-day .word {
+    left: 12px;
+    top: 10px;
+    color: #014091;
+    font-size: 64px;
+    mix-blend-mode: multiply;
+    opacity: calc(0.45 + var(--strength) / 220);
+  }
+  .poster-fly { background: #EF7822; }
+  .poster-fly .cut {
+    position: absolute;
+    inset: 0;
+    background: #3B67E1;
+    clip-path: polygon(42% 0, 100% 0, 100% 100%, 68% 100%);
+    opacity: calc(var(--strength) / 100);
+  }
+  .poster-fly img.base {
+    width: 54%;
+    height: 82%;
+    left: 0;
+    bottom: 0;
+    object-fit: cover;
+    object-position: center 12%;
+    filter: grayscale(1) contrast(1.2);
+    z-index: 1;
+  }
+  .poster-fly .word { right: 14px; top: 16px; color: #F3EEE4; font-size: 40px; z-index: 2; }
+  .poster-comic { background: var(--paper); }
+  .poster-comic .base { filter: grayscale(0.3) contrast(1.4); }
+  .poster-comic .word {
+    left: 10px;
+    bottom: 8px;
+    font-size: 42px;
+    color: #3B67E1;
+    background: var(--paper);
+    padding: 0 4px;
+  }
+  .fine { margin-top: 8px; font-size: 11px; color: rgba(35, 31, 32, 0.55); }
+
+  .score-num {
+    font-size: 72px;
+    line-height: 0.8;
+    letter-spacing: -0.05em;
+    font-weight: 700;
+  }
+  .bars { margin: 10px 0; }
+  .meter { display: grid; grid-template-columns: 36px 1fr 28px; gap: 8px; align-items: center; font-size: 12px; margin: 6px 0; color: var(--ink); }
+  .track { height: 6px; background: #E7EAEF; border-radius: 99px; overflow: hidden; }
+  .track i { display: block; height: 100%; background: var(--teal); }
+  .advice { margin: 8px 0 0; padding-left: 18px; }
+  .advice li { margin: 4px 0; }
+
+  .sheet-scrim { position: absolute; inset: 0 0 88px 0; background: rgba(22, 22, 22, 0.28); z-index: 6; }
+  .sheet {
+    position: absolute;
+    left: 12px; right: 12px; bottom: 88px;
+    border-radius: 22px 22px 0 0;
+    z-index: 7;
+    background: white;
+    color: var(--ink);
+    border-top: 0;
+    padding: 14px 16px 16px;
+    max-height: 68%;
+    overflow: auto;
+  }
+  .sheet h3 { margin: 18px 0 8px; font-size: 13px; font-weight: 600; color: rgba(22, 22, 22, 0.45); }
+  .sheet h3:first-child { margin-top: 2px; }
+  .pick .k { display: block; margin-top: 2px; font-size: 12px; color: rgba(22, 22, 22, 0.5); }
+  .pick {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    border: 0;
+    background: transparent;
+    text-align: left;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .pick .thumb { width: 42px; height: 54px; }
+  .toast {
+    position: absolute;
+    left: 16px; right: 16px; bottom: 74px;
+    z-index: 8;
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  .plan {
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 14px;
+    margin-bottom: 10px;
+    background: transparent;
+    text-align: left;
+    width: 100%;
+  }
+  .plan { background: white; color: var(--ink); border-color: transparent; }
+  .plan.on { border-color: var(--terra); background: white; }
+  .plan b { color: var(--terra); }
+  .plan b { font-size: 28px; letter-spacing: -0.04em; }
+  .me-card {
+    background: white;
+    color: var(--ink);
+    border-radius: 18px;
+    padding: 16px;
+    min-height: 120px;
+  }
+  .me-card p { margin: 6px 0 0; color: rgba(22, 22, 22, 0.62); font-size: 13px; }
+  .list-btn {
+    width: 100%;
+    text-align: left;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    padding: 14px 0;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .site { position: relative; z-index: 1; }
+  .hero {
+    background: var(--ink);
+    color: var(--paper);
+    min-height: calc(100vh - 52px);
+    padding: 28px 7vw 48px;
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 24px;
+    align-items: end;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    width: 46vw;
+    height: 46vw;
+    max-width: 560px;
+    max-height: 560px;
+    right: -4vw;
+    top: -6vw;
+    border-radius: 50%;
+    background-image: radial-gradient(circle, rgba(243, 223, 162, 0.9) 1.2px, transparent 1.35px);
+    background-size: 7px 7px;
+    background-color: transparent;
+  }
+  .hero h1 {
+    margin: 0;
+    font-size: clamp(64px, 9vw, 120px);
+    line-height: 0.86;
+    letter-spacing: -0.055em;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-side { position: relative; z-index: 1; max-width: 360px; justify-self: end; padding-bottom: 8px; }
+  .hero-side p { margin: 0 0 8px; font-size: 18px; }
+  .hero .duo { position: relative; z-index: 1; }
+  .kicker {
+    font-family: "Archivo Black", "PingFang SC", sans-serif;
+    letter-spacing: 0.16em;
+    font-size: 12px;
+    margin-bottom: 18px;
+    color: var(--sand);
+  }
+  .split { display: grid; grid-template-columns: 1fr 1fr; min-height: 460px; }
+  .pane { padding: 36px 7vw; color: #1a1208; }
+  .pane.orange { background: var(--terra); color: var(--paper); }
+  .pane.blue { background: var(--teal); color: var(--ink); }
+  .pane h2 { margin: 0; font-size: clamp(40px, 5vw, 68px); letter-spacing: -0.045em; line-height: 0.9; }
+  .pane p { max-width: 420px; font-size: 16px; }
+  .wall, .band { padding: 42px 7vw 56px; position: relative; z-index: 1; }
+  .wall h2, .band h2 { margin: 0 0 8px; font-size: 36px; letter-spacing: -0.04em; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 18px; }
+  .poster-tile {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    text-align: left;
+    color: inherit;
+  }
+  .poster-tile .art { height: 360px; border-radius: 22px; }
+  .poster-tile strong { display: block; margin-top: 10px; font-size: 16px; }
+  .score-layout { display: grid; grid-template-columns: 280px 1fr; gap: 28px; align-items: center; }
+  .score-card {
+    background: white;
+    color: var(--ink);
+    border-radius: 22px;
+    overflow: hidden;
+    border: 0;
+  }
+  .score-card img { height: 220px; width: 100%; object-fit: cover; display: block; }
+  .score-card .pad { padding: 12px 14px 16px; color: var(--ink); }
+  .score-card .lead { color: rgba(22, 22, 22, 0.72); }
+  .pane.orange .lead, .price .lead { color: inherit; }
+  .prices { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 16px; }
+  .price {
+    border-radius: 22px;
+    padding: 20px;
+    border: 0;
+    background: white;
+    color: var(--ink);
+  }
+  .price.member { background: var(--terra); color: var(--paper); }
+  .price.member .btn { background: var(--sand); color: var(--ink); }
+  .price b { font-size: 42px; letter-spacing: -0.045em; }
+  .price ul { padding-left: 18px; }
+  .gtoast {
+    position: fixed;
+    z-index: 40;
+    left: 50%;
+    bottom: 86px;
+    transform: translateX(-50%);
+    max-width: min(520px, calc(100% - 32px));
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+  .site-foot {
+    padding: 20px 7vw 32px;
+    font-size: 12px;
+    color: rgba(35, 31, 32, 0.55);
+    position: relative;
+    z-index: 1;
+  }
+  @media (max-width: 860px) {
+    .hint { display: none; }
+    .hero, .split, .grid3, .score-layout, .prices { grid-template-columns: 1fr; }
+    .hero { min-height: auto; align-items: start; }
+    .hero::after { width: 220px; height: 220px; }
+    .poster-tile .art { height: 240px; }
+    .phone { width: 100%; height: calc(100vh - 70px); border-radius: 0; border: 0; }
+    .status { display: none; }
+    .app-stage { padding: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; }
+  }
+
+  /* App */
+  .phone {
+    --bg: #231F20;
+    --lift: #2F2A2A;
+    --lift-2: #3B3534;
+    --cream: #EFE6DD;
+    --fg: #EFE6DD;
+    --fg-2: rgba(239, 230, 221, 0.64);
+    --fg-3: rgba(239, 230, 221, 0.4);
+    --line: rgba(239, 230, 221, 0.14);
+    --pink: #EFE6DD;
+    --lilac: #7EBDC2;
+    --mint: #F3DFA2;
+    background: var(--bg);
+    color: var(--fg);
+  }
+  .phone::after {
+    content: ""; position: absolute; inset: 0; z-index: 30; pointer-events: none; border-radius: inherit;
+    background: url("assets/grain.png") repeat; background-size: 128px 128px;
+    opacity: 0.12;
+  }
+  .press { position: relative; overflow: hidden; isolation: isolate; }
+  .press::after {
+    content: ""; position: absolute; right: -14%; bottom: -34%; width: 62%; aspect-ratio: 1; z-index: -1; pointer-events: none;
+    border-radius: 50%;
+    background: radial-gradient(rgba(35, 31, 32, 0.2) 1.1px, transparent 1.5px) 0 0 / 5px 5px;
+    opacity: 0.8;
+  }
+  .misreg { text-shadow: 1.5px 1px 0 rgba(126, 189, 194, 0.55); }
+  .t-terra .misreg, .t-terra.misreg { text-shadow: 1.5px 1px 0 rgba(243, 223, 162, 0.45); }
+  .phone .status { color: var(--fg); }
+  .phone .screen { background: var(--bg); color: var(--fg); padding: 0 16px 28px; scrollbar-width: none; }
+  .phone .screen::-webkit-scrollbar { display: none; }
+  .t-sand { background: var(--sand); color: var(--ink); }
+  .t-teal { background: var(--teal); color: var(--ink); }
+  .t-cream { background: var(--cream); color: var(--ink); }
+  .t-pink { background: var(--pink); color: var(--ink); }
+  .t-lilac { background: var(--lilac); color: var(--ink); }
+  .t-mint { background: var(--mint); color: var(--ink); }
+  .t-terra { background: var(--terra); color: #EFE6DD; }
+  .t-ink { background: var(--ink); color: #EFE6DD; }
+
+  .mascot { display: inline-block; flex: none; line-height: 0; }
+  .mascot svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .bob { animation: bob 3.6s ease-in-out infinite; }
+  @keyframes bob { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-4px) rotate(4deg); } }
+
+  .v-nav {
+    position: sticky; top: 0; z-index: 3;
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 -16px 8px; padding: 10px 16px 8px;
+    background: linear-gradient(var(--bg) 78%, rgba(35, 31, 32, 0));
+  }
+  .v-title { margin: 0; min-width: 0; font-family: "Noto Serif SC", "Songti SC", serif; font-size: 17px; font-weight: 700; letter-spacing: 0.02em; line-height: 1.1; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v-tt { display: flex; align-items: baseline; min-width: 0; padding: 4px 0 2px; }
+  .v-tt .v-title { font-size: 24px; font-weight: 900; letter-spacing: 0.06em; line-height: 1; overflow: visible; }
+  .v-back {
+    width: 32px; height: 32px; flex: none; border: 0; border-radius: 50%;
+    background: var(--lift); color: var(--fg); display: grid; place-items: center;
+  }
+
+  .v-cats { display: flex; gap: 8px; overflow-x: auto; margin: 0 -16px 16px; padding: 0 16px; scrollbar-width: none; }
+  .v-cats::-webkit-scrollbar { display: none; }
+  .v-cat {
+    flex: none; height: 38px; border: 0; border-radius: 999px;
+    padding: 0 14px 0 6px; display: flex; align-items: center; gap: 6px;
+    background: var(--lift); color: var(--fg-2); font-size: 13px; font-weight: 650;
+  }
+  .v-cat.plain { padding-left: 16px; padding-right: 16px; }
+  .v-cat.on { background: var(--cream); color: var(--ink); }
+
+  .v-feed { display: grid; grid-template-columns: 1fr 1fr; column-gap: 12px; row-gap: 20px; }
+  .v-card { min-width: 0; }
+  .v-card.wide { grid-column: 1 / -1; }
+  .v-cover {
+    position: relative; display: block; width: 100%; aspect-ratio: 3 / 4;
+    border: 0; padding: 0; border-radius: 24px; overflow: hidden; background: var(--lift);
+  }
+  .v-card.wide .v-cover { aspect-ratio: 16 / 10; }
+  .v-cover > img, .v-cover > .grade, .v-cover > .swatch { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .v-card.wide .v-cover > img { object-position: center 62%; }
+  .v-badge {
+    position: absolute; left: 12px; bottom: 12px;
+    padding: 5px 10px; border-radius: 999px;
+    background: rgba(35, 31, 32, 0.78);
+    color: #EFE6DD; font-size: 11px; font-weight: 650;
+  }
+  .v-badge.new { left: auto; right: 12px; top: 12px; bottom: auto; background: var(--sand); color: var(--ink); }
+  .v-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 2px 0; }
+  .v-name { min-width: 0; font-size: 15px; font-weight: 650; letter-spacing: -0.01em; color: var(--fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v-name small { display: block; margin-top: 1px; font-size: 12px; font-weight: 500; color: var(--fg-3); }
+  .v-go { flex: none; height: 32px; padding: 0 13px; border: 0; border-radius: 999px; font-size: 13px; font-weight: 700; }
+  .v-go.line { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1.2px var(--line); }
+
+  .v-cat .sw { width: 10px; height: 10px; border-radius: 50%; margin-left: 8px; box-shadow: 0 0 0 1px rgba(239, 230, 221, 0.18); }
+  .v-flist { display: flex; flex-direction: column; gap: 12px; }
+  .v-fcard {
+    position: relative; height: 136px; border-radius: 28px; padding: 8px;
+    display: grid; grid-template-columns: 1fr 52%; gap: 8px;
+  }
+  .v-hit { position: absolute; inset: 0; z-index: 1; border: 0; padding: 0; background: transparent; border-radius: inherit; }
+  .v-fcopy { position: relative; z-index: 0; display: flex; flex-direction: column; align-items: flex-start; padding: 8px 4px 4px 8px; pointer-events: none; min-width: 0; }
+  .v-fcopy .k { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; opacity: 0.6; }
+  .v-fcopy strong { margin-top: 6px; font-size: 18px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; }
+  .v-fcard .v-go { position: absolute; z-index: 2; left: 16px; bottom: 14px; background: var(--ink); color: #EFE6DD; height: 30px; font-size: 12px; }
+  .v-fphoto { position: relative; border-radius: 22px; overflow: hidden; pointer-events: none; }
+  .v-fphoto .grade { position: absolute; inset: 0; }
+  .v-fphoto .grade img.base { width: 100%; height: 100%; object-fit: cover; object-position: 22% center; }
+
+  .v-actions { display: grid; grid-template-columns: 1.15fr 1fr; gap: 10px; margin-bottom: 16px; }
+  .v-sec { display: flex; align-items: baseline; justify-content: space-between; margin: 0 2px 12px; }
+  .v-sec h2 { margin: 0; font-family: "Noto Serif SC", "Songti SC", serif; font-size: 18px; font-weight: 900; letter-spacing: 0.06em; color: var(--fg); }
+
+  .v-gate {
+    position: relative; overflow: hidden; height: 112px; border: 0; border-radius: 24px;
+    padding: 16px 16px 15px; text-align: left; display: flex; flex-direction: column; justify-content: flex-start;
+  }
+  .v-gate .k { font-family: Fraunces, Georgia, serif; font-size: 10px; font-weight: 600; letter-spacing: 0.16em; opacity: 0.55; }
+  .v-gate strong { position: relative; font-family: "Noto Serif SC", "Songti SC", serif; font-size: 20px; font-weight: 900; letter-spacing: 0.04em; line-height: 1.1; }
+  .v-gate strong { margin-top: 9px; }
+  .v-gate .note { position: absolute; left: 16px; right: 16px; bottom: 15px; margin: 0; font-size: 12px; line-height: 1.4; opacity: 0.68; white-space: nowrap; }
+  .v-gate.start { color: var(--ink); }
+  .v-gate.start .ring {
+    position: absolute; right: -16px; top: 50%; width: 96px; height: 96px; margin-top: -48px;
+    border-radius: 50%; border: 1.5px solid rgba(35, 31, 32, 0.55);
+    box-shadow: inset 0 0 0 10px transparent, inset 0 0 0 11.5px rgba(35, 31, 32, 0.35), 0 0 0 14px rgba(35, 31, 32, 0.08);
+  }
+  .v-gate.start .ring::before {
+    content: ""; position: absolute; inset: 25px; border-radius: 50%; background: var(--terra);
+    box-shadow: inset 0 0 0 5px var(--sand);
+  }
+  .v-gate.start .ring::after {
+    content: ""; position: absolute; left: 38%; top: 28%; width: 14px; height: 8px; border-radius: 999px;
+    background: rgba(239, 230, 221, 0.55); transform: rotate(-28deg);
+  }
+  .v-gate.book { color: var(--ink); }
+
+  .v-railwrap { margin: 0 -16px; container-type: inline-size; }
+  .v-rail {
+    --card: 60cqw;
+    display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory;
+    padding: 14px 20cqw 34px;
+    scrollbar-width: none; cursor: grab; user-select: none;
+  }
+  .v-rail::-webkit-scrollbar { display: none; }
+  .v-rail.drag { scroll-snap-type: none; cursor: grabbing; }
+  .v-pol {
+    position: relative; flex: none; width: var(--card); scroll-snap-align: center;
+    border: 0; padding: 9px 9px 0; border-radius: 6px; text-align: left;
+    background: #EFE6DD; color: var(--ink);
+    box-shadow: 0 16px 30px rgba(0, 0, 0, 0.45);
+  }
+  .v-pol img { -webkit-user-drag: none; pointer-events: none; }
+  .v-pol.new { background: var(--lift); color: var(--fg); box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35); }
+  .v-pol.new .ph { display: flex; align-items: center; justify-content: center; background: var(--bg); box-shadow: inset 0 0 0 1.5px var(--line); }
+  .v-pol.new .cap { justify-content: center; }
+  .v-pol.new strong { font-size: 14px; font-weight: 700; opacity: 0.8; }
+  .v-pol .ph { display: block; position: relative; aspect-ratio: 1 / 1; overflow: hidden; background: #3B3534; }
+  .v-pol .ph img { width: 100%; height: 100%; object-fit: cover; object-position: center 24%; display: block; }
+  .v-pol .stamp {
+    position: absolute; right: 8px; bottom: 6px;
+    font-family: "Courier New", ui-monospace, monospace; font-size: 13px; font-weight: 700; letter-spacing: 0.06em;
+    color: #FF9A3C; text-shadow: 0 0 5px rgba(255, 130, 40, 0.9);
+  }
+  .v-pol .cap { height: 62px; display: flex; align-items: center; gap: 10px; padding: 0 3px; }
+  .v-pol .cap b { font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 32px; font-weight: 700; letter-spacing: -0.05em; line-height: 1; color: var(--terra); }
+  .v-pol .cap p { margin: 0; font-size: 11.5px; line-height: 1.4; color: rgba(35, 31, 32, 0.72); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .v-pol .tape { position: absolute; left: 50%; top: -10px; width: 72px; height: 20px; margin-left: -36px; transform: rotate(-4deg); opacity: 0.88; z-index: 1; }
+  .v-dots { display: flex; justify-content: center; gap: 5px; margin: -18px 0 4px; }
+  .v-dots i { width: 6px; height: 6px; border-radius: 999px; background: var(--lift-2); transition: width 0.25s, background 0.25s; }
+  .v-dots i.on { width: 18px; background: var(--pink); }
+  .v-all {
+    display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 12px;
+    border: 0; border-radius: 999px; background: var(--lift); color: var(--fg);
+    font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 13px; font-weight: 600;
+  }
+  .v-all em { font-style: normal; color: var(--fg-3); font-weight: 500; }
+
+  .v-msum { display: flex; gap: 8px; margin-bottom: 14px; }
+  .v-msum span { padding: 6px 11px; border-radius: 999px; font-size: 12px; font-weight: 650; background: var(--lift); color: var(--fg-2); }
+  .v-masonry { columns: 2; column-gap: 10px; }
+  .v-shot {
+    display: block; width: 100%; break-inside: avoid; margin: 0 0 10px; padding: 0; border: 0;
+    background: var(--lift); color: var(--fg); border-radius: 20px; overflow: hidden; text-align: left;
+  }
+  .v-shot .im { position: relative; display: block; }
+  .v-shot img { display: block; width: 100%; height: auto; }
+  .v-shot .n {
+    position: absolute; left: 8px; bottom: 8px; padding: 3px 9px; border-radius: 999px; background: var(--cream); color: var(--ink);
+    font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 17px; font-weight: 700; letter-spacing: -0.03em;
+  }
+  .v-shot .stamp {
+    position: absolute; right: 9px; bottom: 9px;
+    font-family: "Courier New", ui-monospace, monospace; font-size: 11px; font-weight: 700;
+    color: #FF9A3C; text-shadow: 0 0 5px rgba(255, 130, 40, 0.9);
+  }
+  .v-shot p { margin: 0; padding: 9px 11px 11px; font-size: 12px; line-height: 1.4; color: var(--fg-2); }
+
+  .v-avatar { position: relative; flex: none; width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 0 3px rgba(35, 31, 32, 0.9); }
+  .v-avatar .mascot { width: 50px; height: 50px; }
+  .v-avatar .roll {
+    position: absolute; right: -4px; bottom: -4px; width: 24px; height: 24px; border: 0; border-radius: 50%;
+    background: var(--ink); color: var(--sand); font-size: 13px; line-height: 1; display: grid; place-items: center;
+  }
+  .v-sec small { font-size: 12px; color: var(--fg-3); }
+
+  .v-pile { display: flex; flex-direction: column; }
+  .v-back-card {
+    height: 66px; border: 0; border-radius: 22px; margin: 0 14px -28px;
+    padding: 12px 16px 0; display: flex; align-items: flex-start; gap: 10px; text-align: left;
+  }
+  .v-back-card:nth-child(1) { margin: 0 28px -28px; }
+  .v-back-card b { font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 18px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.2; }
+  .v-back-card em { min-width: 0; font-style: normal; font-size: 13px; font-weight: 600; line-height: 1.6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v-front {
+    position: relative; border: 0; border-radius: 28px; padding: 12px; text-align: left;
+    display: grid; grid-template-columns: 108px 1fr; gap: 14px; align-items: center;
+    box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.22);
+  }
+  .v-front img { width: 108px; height: 138px; border-radius: 20px; object-fit: cover; display: block; }
+  .v-front .tag { display: inline-block; padding: 3px 9px; border-radius: 999px; background: var(--lift-2); color: var(--sand); font-size: 11px; font-weight: 700; }
+  .v-front b { display: block; margin-top: 8px; font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 48px; font-weight: 700; letter-spacing: -0.05em; line-height: 0.9; }
+  .v-front p { margin: 8px 0 0; font-size: 13px; line-height: 1.45; opacity: 0.8; }
+  .v-front .mascot { position: absolute; top: 12px; right: 12px; width: 46px; height: 46px; }
+  .v-mini { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+  .v-mini div { background: var(--lift); border-radius: 20px; padding: 12px; }
+  .v-mini b { display: block; color: var(--fg); font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 24px; font-weight: 700; letter-spacing: -0.04em; line-height: 1; }
+  .v-mini span { display: block; margin-top: 6px; font-size: 11px; color: var(--fg-3); }
+
+  .v-photo { position: relative; width: 100%; aspect-ratio: var(--ar, 3 / 4); max-height: 380px; border-radius: 28px; overflow: hidden; background: var(--lift); }
+  .v-photo img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+  .v-photo img.bg { object-fit: cover; filter: blur(22px) brightness(0.55) saturate(1.2); transform: scale(1.2); }
+  .v-photo img.fg { object-fit: contain; }
+  .v-scorecard {
+    position: relative; margin: 12px 0 14px; border-radius: 26px; padding: 16px 84px 16px 18px;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.3);
+  }
+  .v-scorecard b { display: block; font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 56px; font-weight: 700; letter-spacing: -0.05em; line-height: 0.9; }
+  .v-scorecard p { margin: 8px 0 0; font-size: 14px; line-height: 1.45; }
+  .v-scorecard .mascot { position: absolute; right: 14px; top: 50%; width: 60px; height: 60px; margin-top: -30px; }
+  .v-panel { background: var(--lift); border-radius: 26px; padding: 16px; margin-bottom: 12px; }
+  .v-panel h3 { margin: 0 0 14px; font-size: 14px; font-weight: 650; color: var(--fg-2); }
+  .v-bars { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; align-items: end; height: 156px; }
+  .v-bar { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .v-bar b { font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 13px; font-weight: 600; color: var(--fg); }
+  .v-bar i { display: block; width: 100%; max-width: 34px; border-radius: 999px; background: var(--sand); }
+  .v-bar.low i { background: var(--terra); }
+  .v-bar.low b { color: var(--terra); }
+  .v-bar span { font-size: 12px; color: var(--fg-3); }
+  .v-advice { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+  .v-advice li { display: flex; gap: 12px; align-items: flex-start; background: var(--lift); border-radius: 20px; padding: 12px 14px; font-size: 14px; line-height: 1.45; color: var(--fg); }
+  .v-advice li b { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 13px; color: var(--sand); box-shadow: inset 0 0 0 1.2px rgba(243, 223, 162, 0.5); }
+
+  .v-tip-lead { margin: 0 2px 16px; font-size: 13px; line-height: 1.55; color: var(--fg-2); }
+  .v-tip {
+    position: relative; overflow: hidden; border-radius: 24px; padding: 18px 18px 16px; margin-bottom: 10px;
+  }
+  .v-tip .head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+  .v-tip .dim {
+    padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 650;
+    background: rgba(35, 31, 32, 0.12); color: inherit;
+  }
+  .v-tip strong {
+    display: block; font-family: "Noto Serif SC", "Songti SC", serif;
+    font-size: 20px; font-weight: 900; letter-spacing: 0.04em; line-height: 1.2;
+  }
+  .v-tip .lead { margin: 8px 0 0; font-size: 13.5px; line-height: 1.5; opacity: 0.82; }
+  .v-tip ul { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+  .v-tip li {
+    display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; line-height: 1.45; opacity: 0.88;
+  }
+  .v-tip li::before {
+    content: ""; flex: none; width: 5px; height: 5px; margin-top: 6px; border-radius: 50%; background: currentColor; opacity: 0.55;
+  }
+  .v-tip .foot {
+    display: block; margin-top: 14px; padding-top: 10px; border-top: 1px solid rgba(35, 31, 32, 0.14);
+    font-size: 11.5px; line-height: 1.4; opacity: 0.62;
+  }
+  .v-tip.t-ink .dim, .v-tip.t-terra .dim { background: rgba(239, 230, 221, 0.14); }
+  .v-tip.t-ink .foot, .v-tip.t-terra .foot { border-top-color: rgba(239, 230, 221, 0.16); }
+
+  .v-drop {
+    width: 100%; border: 1.5px dashed var(--line); border-radius: 28px; height: 196px; background: var(--lift); color: var(--fg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; margin-bottom: 22px;
+  }
+  .v-drop .mascot { width: 68px; height: 68px; margin-bottom: 6px; }
+  .v-drop strong { font-size: 18px; font-weight: 700; }
+  .v-drop span { font-size: 13px; opacity: 0.72; }
+  .v-album { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .v-album button { display: block; width: 100%; aspect-ratio: 3 / 4; border: 0; padding: 0; border-radius: 18px; overflow: hidden; background: var(--lift); }
+  .v-album img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  .v-profile { position: relative; display: flex; align-items: center; gap: 14px; padding: 6px 2px 18px; }
+  .v-profile strong { display: block; font-size: 19px; font-weight: 700; letter-spacing: -0.02em; }
+  .v-profile .plan-chip { display: inline-block; margin-top: 6px; padding: 3px 9px; border-radius: 999px; background: var(--ink); color: var(--sand); font-size: 11px; font-weight: 700; }
+  .v-stats { display: grid; grid-template-columns: repeat(3, 1fr); margin-bottom: 26px; background: var(--lift); border-radius: 22px; padding: 4px 0; }
+  .v-stat { border: 0; background: transparent; color: var(--fg); padding: 12px 16px; text-align: left; display: flex; flex-direction: column; gap: 6px; }
+  .v-stat + .v-stat { box-shadow: inset 1px 0 0 var(--line); }
+  .v-stat b { font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  .v-stat b.acc { color: var(--sand); }
+  .v-stat span { font-size: 12px; color: var(--fg-3); }
+  .v-folders { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 0 0 24px; padding-top: 12px; }
+  .v-folder {
+    position: relative; border: 0; height: 120px; border-radius: 4px 20px 20px 20px;
+    padding: 12px; text-align: left; display: flex; flex-direction: column; justify-content: flex-end;
+  }
+  .v-folder::before { content: ""; position: absolute; left: 0; top: -11px; width: 52%; height: 16px; border-radius: 12px 12px 0 0; background: inherit; }
+  .v-folder strong { position: relative; z-index: 1; font-size: 15px; font-weight: 700; }
+  .v-folder em { position: relative; z-index: 1; font-style: normal; font-size: 11px; opacity: 0.7; margin-top: 2px; }
+  .v-peek { position: absolute; right: 10px; top: 10px; width: 54px; height: 54px; }
+  .v-peek img { position: absolute; width: 36px; height: 46px; object-fit: cover; border-radius: 9px; border: 2px solid rgba(255, 255, 255, 0.9); }
+  .v-peek img:nth-child(1) { right: 14px; top: 2px; transform: rotate(-12deg); }
+  .v-peek img:nth-child(2) { right: 0; top: 6px; transform: rotate(9deg); }
+  .v-list { background: var(--lift); border-radius: 24px; overflow: hidden; }
+  .v-list button {
+    width: 100%; border: 0; background: transparent; color: var(--fg); text-align: left;
+    display: flex; align-items: center; gap: 12px; padding: 14px 16px; font-size: 14px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .v-list button:last-child { border-bottom: 0; }
+  .v-list .end { margin-left: auto; color: var(--fg-3); font-size: 13px; }
+
+  .v-hero { position: relative; height: clamp(200px, calc(min(820px, 100vh - 88px) * 0.42), 340px); border-radius: 28px; overflow: hidden; background: var(--lift); }
+  .v-cta {
+    position: sticky; bottom: 0; z-index: 4; margin: 0 -16px -28px; padding: 14px 16px 22px;
+    background: linear-gradient(rgba(35, 31, 32, 0), var(--bg) 26%);
+  }
+  .v-hero > img, .v-hero > .grade, .v-hero > .swatch { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .v-lead { margin: 14px 2px 0; font-size: 14px; line-height: 1.5; color: var(--fg-2); }
+  .v-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
+  .v-chip { padding: 6px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--fg-2); box-shadow: inset 0 0 0 1.2px var(--line); }
+  .v-fine { margin: 0 2px 14px; font-size: 12px; line-height: 1.45; color: var(--fg-3); }
+  .v-btn { width: 100%; height: 54px; border: 0; border-radius: 999px; font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .v-btn.ghost { background: transparent; color: var(--fg); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.22); }
+  .v-btns { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+
+  .v-printer {
+    position: relative; border-radius: 30px; padding: 0 14px 0; margin-bottom: 14px; overflow: hidden;
+    box-shadow: inset 0 -10px 0 rgba(35, 31, 32, 0.08), 0 18px 34px rgba(0, 0, 0, 0.35);
+  }
+  .v-pr-top { position: relative; height: 58px; display: flex; align-items: center; gap: 12px; }
+  .v-pr-top .stripe { align-self: stretch; width: 30px; display: flex; flex-direction: column; margin-left: 6px; }
+  .v-pr-top .stripe i { flex: 1; }
+  .v-pr-top .count {
+    margin-left: auto; display: flex; align-items: baseline; gap: 5px; padding: 5px 9px; border-radius: 9px;
+    background: var(--ink); color: #FF9A3C; font-family: "Courier New", ui-monospace, monospace;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+  }
+  .v-pr-top .count small { font-size: 9px; font-weight: 700; opacity: 0.7; }
+  .v-pr-top .count b { font-size: 16px; font-weight: 700; text-shadow: 0 0 6px rgba(255, 130, 40, 0.85); }
+  .v-pr-top .eye { width: 34px; height: 22px; border-radius: 7px; background: linear-gradient(135deg, #3D6E78, #231F20 70%); box-shadow: 0 0 0 3px rgba(35, 31, 32, 0.85); }
+  .v-pr-slots { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 6px 4px 16px; }
+  .v-in { position: relative; border: 0; padding: 0; display: flex; flex-direction: column; color: var(--ink); text-align: left; }
+  .v-in .win { position: relative; display: grid; place-items: center; overflow: hidden; aspect-ratio: 3 / 4; }
+  .v-in .win > img, .v-in .win > .grade, .v-in .win > .swatch { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .v-in .win .grade img.base { width: 100%; height: 100%; object-fit: cover; object-position: 22% center; }
+  .v-in .win.empty { align-content: center; gap: 8px; }
+  .v-plus { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; font-style: normal; font-size: 20px; font-weight: 400; line-height: 1; box-shadow: inset 0 0 0 1.4px currentColor; opacity: 0.8; }
+  .v-in .win.empty em { font-style: normal; font-size: 12.5px; font-weight: 700; }
+  .v-in .lab { display: block; font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .v-in.film { background: var(--ink); color: var(--sand); border-radius: 8px; padding: 18px 8px 8px; transform: rotate(-3deg); }
+  .v-in.film::before {
+    content: ""; position: absolute; left: 8px; right: 8px; top: 6px; height: 6px;
+    background: repeating-linear-gradient(90deg, rgba(243, 223, 162, 0.85) 0 6px, transparent 6px 11px); border-radius: 2px;
+  }
+  .v-in.film .win { border-radius: 4px; background: #3B3534; }
+  .v-in.film .win.empty { color: var(--sand); }
+  .v-in.film .lab { margin-top: 7px; color: var(--sand); }
+  .v-in.snap { background: #EFE6DD; border-radius: 5px; padding: 8px 8px 0; transform: rotate(3deg); box-shadow: 0 10px 20px rgba(0, 0, 0, 0.22); }
+  .v-in.snap .win { background: #E9E3D6; }
+  .v-in.snap .win.empty { background: repeating-linear-gradient(-45deg, #EDE7DA 0 8px, #E4DDCD 8px 16px); }
+  .v-in.snap .lab { height: 30px; line-height: 30px; font-size: 12px; color: rgba(35, 31, 32, 0.7); }
+  .v-in.on .win.empty { display: none; }
+  .v-pr-slit { position: relative; height: 34px; margin: 0 -14px; display: flex; align-items: center; justify-content: center; background: rgba(35, 31, 32, 0.1); }
+  .v-pr-slit i { width: 56%; height: 6px; border-radius: 999px; background: var(--ink); box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.6); }
+  .v-shutter {
+    width: 100%; height: 66px; border: 0; border-radius: 999px; padding: 0 22px 0 8px;
+    display: flex; align-items: center; gap: 12px; text-align: left; opacity: 0.6;
+    transition: opacity 0.2s, transform 0.15s;
+  }
+  .v-shutter.ready { opacity: 1; }
+  .v-shutter:active { transform: scale(0.98); }
+  .v-shutter .knob { flex: none; width: 50px; height: 50px; border-radius: 50%; background: var(--sand); display: grid; place-items: center; box-shadow: inset 0 -3px 0 rgba(35, 31, 32, 0.18), 0 0 0 4px rgba(35, 31, 32, 0.22); }
+  .v-shutter .knob i { width: 26px; height: 26px; border-radius: 50%; background: var(--ink); box-shadow: inset 0 0 0 4px #3B3534, 0 0 0 2px rgba(255, 255, 255, 0.45); }
+  .v-shutter .knob { position: relative; }
+  .v-shutter.ready .knob::after {
+    content: ""; position: absolute; inset: -4px; border-radius: 50%; pointer-events: none;
+    box-shadow: 0 0 0 5px rgba(243, 223, 162, 0.28);
+    animation: knob 1.6s ease-in-out infinite;
+  }
+  @keyframes knob { 0%, 100% { opacity: 0; transform: scale(0.94); } 50% { opacity: 1; transform: scale(1); } }
+  .v-shutter .txt strong { display: block; font-size: 17px; font-weight: 750; letter-spacing: 0.02em; color: #EFE6DD; }
+  .v-shutter .txt small { display: block; margin-top: 2px; font-size: 11.5px; color: rgba(255, 255, 255, 0.72); }
+  .v-shutter .arr { margin-left: auto; font-size: 20px; color: #EFE6DD; }
+
+  .v-toggle { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--lift); }
+  .v-toggle button { border: 0; background: transparent; color: var(--fg-2); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 650; }
+  .v-toggle button.on { background: var(--sand); color: var(--ink); }
+  .v-toggle.wide { display: flex; margin-bottom: 14px; }
+  .v-toggle.wide button { flex: 1; }
+  .v-resultbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .phone .frame-art { height: 320px; border-radius: 28px; background: var(--lift); }
+  .v-slider { background: var(--lift); border-radius: 22px; padding: 12px 16px; margin: 12px 0 0; }
+  .v-slider header { display: flex; justify-content: space-between; font-size: 13px; color: var(--fg-2); margin-bottom: 6px; }
+  .v-slider header span:last-child { font-family: Fraunces, Georgia, "Songti SC", serif; font-weight: 700; color: var(--sand); }
+  .phone input[type="range"] { accent-color: var(--sand); }
+
+  .v-parse { padding: 40px 4px 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .v-parse .mascot { width: 108px; height: 108px; animation: bob 1.4s ease-in-out infinite; }
+  .v-parse h2 { margin: 22px 0 18px; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+  .v-steps { list-style: none; margin: 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 8px; }
+  .v-steps li { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 20px; background: var(--lift); color: var(--fg-3); font-size: 14px; text-align: left; }
+  .v-steps li i { width: 10px; height: 10px; border-radius: 50%; background: var(--lift-2); flex: none; }
+  .v-steps li.on { color: var(--fg); }
+  .v-steps li.on i { background: var(--sand); }
+
+  .v-planc { position: relative; overflow: hidden; border-radius: 30px; padding: 20px; margin-bottom: 14px; }
+  .v-planc .k { font-size: 13px; font-weight: 650; opacity: 0.72; }
+  .v-planc b { display: block; margin-top: 6px; font-family: Fraunces, Georgia, "Songti SC", serif; font-size: 58px; font-weight: 700; letter-spacing: -0.05em; line-height: 0.95; }
+  .v-planc b small { font-size: 16px; letter-spacing: 0; font-weight: 600; opacity: 0.7; }
+  .v-planc ul { margin: 14px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; font-size: 14px; }
+  .v-planc li { display: flex; gap: 8px; align-items: center; }
+  .v-planc li::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); flex: none; }
+
+  .phone .sheet { background: #2F2A2A; color: var(--fg); border-radius: 28px 28px 0 0; }
+  .phone .sheet h3 { color: var(--fg-3); }
+  .phone .pick { color: var(--fg); border-bottom-color: rgba(255, 255, 255, 0.07); }
+  .phone .pick .k { color: var(--fg-3); }
+  .phone .pick .thumb { border-radius: 12px; overflow: hidden; flex: none; }
+  .phone .pick .thumb img, .phone .pick .thumb .swatch, .phone .pick .thumb .grade { width: 100%; height: 100%; object-fit: cover; }
+  .phone .sheet-scrim { background: rgba(0, 0, 0, 0.5); }
+
+  .phone .tabbar { background: #2F2A2A; box-shadow: 0 16px 34px rgba(0, 0, 0, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.05); }
+  .phone .tabbar .tab { color: var(--fg-3); }
+  .phone .tabbar .tab .tic { width: 44px; height: 28px; border-radius: 14px; display: grid; place-items: center; transition: background 0.2s; }
+  .phone .tabbar .tab.on { color: var(--fg); }
+  .phone .tabbar .tab.on .tic { background: var(--sand); color: var(--ink); }
+  .phone .tab-main { margin-top: -26px; }
+  .phone .tab-main .plus-blob { width: 60px; height: 60px; display: block; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45)); transition: transform 0.35s; }
+  .phone .tab-main .plus-blob .blades { transform-origin: 32px 32px; transition: transform 0.35s; }
+  .phone .tab-main:active .plus-blob .blades, .phone .tab-main.on .plus-blob .blades { transform: rotate(60deg); }
+  .gtoast { background: var(--sand); color: var(--ink); font-weight: 600; border-radius: 16px; }
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="logo">印相</div>
+  <div class="seg">
+    <button type="button" data-act="surface" data-surface="app" class="on">应用</button>
+    <button type="button" data-act="surface" data-surface="web">网站</button>
+  </div>
+  <div class="hint" id="hint"></div>
+</header>
+<div class="stage" id="stage"></div>
+<script>
+const PRESETS = [
+  { id: "paper", name: "青蓝纸色", engine: "filter", img: "assets/ref-time.jpg", mark: "青", cat: "cold", blurb: "网点、纸底、青蓝墨。人和街道留在原处。", filterChips: ["色温 青", "对比 偏低", "高光 纸色", "颗粒 网点", "暗角 无", "肤色 不磨"], styleChips: ["媒介 丝网", "套色 蓝与纸色", "标题 超大", "网点 密", "主体 留在照片里", "文字 左上"] },
+  { id: "sing", name: "歌唱海报", engine: "style", img: "assets/cover-sing.jpg", mark: "唱", blurb: "钴蓝底、橙色网点、白字斜着压过主体。", filterChips: ["底色 钴蓝", "强调 橙", "对比 高", "边缘 硬", "颗粒 网点", "肤色 不磨"], styleChips: ["媒介 丝网海报", "主体 斜置", "白字 超粗", "橙色网点", "背景 纯色", "不换脸"] },
+  { id: "fly", name: "斜切城市", engine: "style", img: "assets/cover-fly.jpg", mark: "城", blurb: "橙和蓝对切，照片收成剪影一样的块。", filterChips: ["橙蓝对撞", "颗粒 粗", "对比 偏高", "高光 暖", "阴影 蓝", "肤色 不磨"], styleChips: ["构图 斜切", "套色 橙加蓝", "主体 剪影", "颗粒 印刷", "标题 短", "不换脸"] },
+  { id: "sun", name: "晴天树影", engine: "filter", img: null, mark: "晴", cat: "warm", blurb: "树荫的光斑留下来，白衣服不要死白。", filterChips: ["高光 收一点", "阴影 绿", "对比 柔", "色温 日间", "颗粒 轻", "肤色 不磨"], styleChips: ["媒介 杂志", "光 树影", "套色 少", "留白 多", "标题 小", "不换脸"] },
+  { id: "comic", name: "漫画勾线", engine: "style", img: "assets/cover-comic.jpg", mark: "漫", blurb: "线稿加有限套色。五官位置按原片锁定。", filterChips: ["对比 高", "饱和 降", "边缘 清楚", "色温 中性", "颗粒 无", "肤色 不磨"], styleChips: ["媒介 漫画", "线 清楚", "套色 不超过三色", "背景 简化", "表情 保持", "不换脸"] },
+  { id: "plain", name: "直出校正", engine: "filter", img: null, mark: "直", cat: "mono", blurb: "几乎只统一白平衡。给不想要滤镜脸的照片。", filterChips: ["白平衡 统一", "对比 原样", "颗粒 无", "暗角 无", "饱和 原样", "肤色 不磨"], styleChips: ["媒介 直出", "不加重画", "不改构图", "不添标题", "保留瑕疵", "不换脸"] },
+  { id: "mist", name: "雾蓝清晨", engine: "filter", img: null, mark: "雾", cat: "cold", css: "saturate(0.6) contrast(0.92) brightness(1.06)", tint: "rgba(86, 150, 170, 0.7)", blurb: "压低饱和，阴影偏青，像天刚亮。", filterChips: ["色温 冷", "饱和 低", "对比 柔", "阴影 青", "颗粒 轻", "肤色 不磨"], styleChips: [] },
+  { id: "neon", name: "夜蓝霓虹", engine: "filter", img: null, mark: "夜", cat: "cold", css: "sepia(0.35) hue-rotate(178deg) saturate(1.7) contrast(1.18) brightness(0.86)", blurb: "暗部压蓝，灯色留着，适合夜里拍的。", filterChips: ["阴影 深蓝", "高光 保留", "对比 高", "饱和 偏高", "颗粒 中", "肤色 不磨"], styleChips: [] },
+  { id: "gold", name: "柯达金", engine: "filter", img: null, mark: "金", cat: "warm", css: "sepia(0.35) saturate(1.45) contrast(1.08) brightness(1.04)", blurb: "暖黄高光，皮肤有血色但不发红。", filterChips: ["色温 暖", "高光 金", "饱和 偏高", "对比 中", "颗粒 细", "肤色 不磨"], styleChips: [] },
+  { id: "dusk", name: "落日橘", engine: "filter", img: null, mark: "橘", cat: "warm", css: "sepia(0.5) hue-rotate(-18deg) saturate(1.75) contrast(1.06)", blurb: "把傍晚的橘色推出来，天空不发灰。", filterChips: ["色温 很暖", "天空 橘", "对比 中", "饱和 高", "暗角 轻", "肤色 不磨"], styleChips: [] },
+  { id: "cream", name: "奶油日系", engine: "filter", img: null, mark: "奶", cat: "warm", css: "sepia(0.18) saturate(0.82) contrast(0.88) brightness(1.13)", blurb: "提亮、降对比，白色带一点奶油。", filterChips: ["曝光 提亮", "对比 低", "白色 奶油", "饱和 低", "颗粒 无", "肤色 不磨"], styleChips: [] },
+  { id: "fade", name: "褪色胶片", engine: "filter", img: null, mark: "褪", cat: "film", css: "sepia(0.25) saturate(0.72) contrast(0.84) brightness(1.06)", blurb: "黑位抬起来，颜色像放了二十年。", filterChips: ["黑位 抬高", "饱和 低", "对比 低", "颗粒 粗", "色偏 黄绿", "肤色 不磨"], styleChips: [] },
+  { id: "hk", name: "港风红调", engine: "filter", img: null, mark: "港", cat: "film", css: "sepia(0.3) hue-rotate(-24deg) saturate(1.55) contrast(1.16) brightness(0.95)", blurb: "红绿分开，暗部偏洋红，像老电影截图。", filterChips: ["红 浓", "绿 偏青", "对比 高", "暗部 洋红", "颗粒 中", "肤色 不磨"], styleChips: [] },
+  { id: "cross", name: "正片负冲", engine: "filter", img: null, mark: "冲", cat: "film", css: "contrast(1.26) saturate(1.5) hue-rotate(-12deg)", blurb: "高反差、色彩跳，阴影带一点青。", filterChips: ["对比 很高", "饱和 高", "阴影 青", "高光 黄", "颗粒 中", "肤色 不磨"], styleChips: [] },
+  { id: "silver", name: "银盐黑白", engine: "filter", img: null, mark: "银", cat: "mono", css: "grayscale(1) contrast(1.28) brightness(1.02)", blurb: "去色加反差，留下光的形状。", filterChips: ["去色", "对比 高", "黑位 实", "颗粒 银盐", "暗角 轻", "肤色 不磨"], styleChips: [] },
+  { id: "ash", name: "低反差灰", engine: "filter", img: null, mark: "灰", cat: "mono", css: "grayscale(0.85) contrast(0.88) brightness(1.08)", blurb: "几乎去色，灰调很柔，适合阴天。", filterChips: ["去色 大半", "对比 低", "高光 柔", "颗粒 细", "暗角 无", "肤色 不磨"], styleChips: [] }
+];
+document.head.insertAdjacentHTML("beforeend", `<style>${PRESETS.filter((p) => p.css).map((p) => `.g-${p.id} .base{filter:${p.css}}` + (p.tint ? `.g-${p.id}::after{content:"";position:absolute;inset:0;background:${p.tint};mix-blend-mode:soft-light;pointer-events:none}.is-raw .g-${p.id}::after{display:none}` : "")).join("")}</style>`);
+const SRCS = [
+  { id: "street", name: "街边", img: "assets/src-street.jpg" },
+  { id: "portrait", name: "窗边", img: "assets/src-portrait.jpg" },
+  { id: "noodles", name: "面", img: "assets/src-noodles.jpg" }
+];
+const SCORES = {
+  street: { n: 81, verdict: "树影和白衣服已经成立，人站得太正。", dims: [["光", 86], ["构图", 70], ["色彩", 84], ["主体", 80], ["技术", 78], ["表达", 76]], tips: ["裁掉头顶一截空树荫，让眼睛靠近上三分线。", "白衣服在阳光里接近过曝，阴影再压一点，衣服才有形。", "远处的行人可以留着，它让这张像路过。"] },
+  portrait: { n: 88, verdict: "侧光是这张照片的全部理由。", dims: [["光", 93], ["构图", 86], ["色彩", 80], ["主体", 90], ["技术", 84], ["表达", 85]], tips: ["窗户的亮部已经很亮，别再加曝光，把脸的暗面留住。", "墙上的画框有点抢，收到更紧的半身，光会更集中。", "毛衣纹理值得留下，导出时不要开磨皮。"] },
+  noodles: { n: 86, verdict: "这碗面自己会说话，桌沿也在帮忙。", dims: [["光", 80], ["构图", 90], ["色彩", 92], ["主体", 88], ["技术", 82], ["表达", 84]], tips: ["筷子已经把视线引进碗里，不要再加贴纸。", "青葱是唯一的冷色，可以再亮一点，汤色保持暗。", "右下的金属桌沿有点空，裁掉一角会更紧。"] },
+  city: { img: "assets/filter-city.jpg", ar: "16 / 9", n: 90, verdict: "逆光把整条街收成一条线，人放得刚好。", dims: [["光", 95], ["构图", 92], ["色彩", 78], ["主体", 86], ["技术", 88], ["表达", 91]], tips: ["人在消失点上，别再往中间裁，留着两侧的楼。", "高光已经到头，导出时别再拉亮天空。", "地面的反光可以再压暗一点，路会更有分量。"] },
+  wall: { img: "assets/filter-sample.jpg", ar: "4 / 3", n: 84, verdict: "粉墙和斜影已经很好，右边空得有点多。", dims: [["光", 88], ["构图", 76], ["色彩", 90], ["主体", 84], ["技术", 82], ["表达", 80]], tips: ["从右边裁掉三分之一，人和植物会靠得更近。", "斜影是这张的线条，别让它被裁断。", "墙已经很粉，不要再加暖色滤镜。"] }
+};
+const SCORE_ORDER = ["portrait", "city", "noodles", "wall", "street"];
+function shot(id) {
+  const s = SCORES[id];
+  return { img: s.img || src(id).img, ar: s.ar || "3 / 4" };
+}
+
+function initialAvatar() {
+  try {
+    const saved = localStorage.getItem("yx-avatar");
+    if (saved) return Number(saved);
+    const seed = Math.floor(Math.random() * 1e6);
+    localStorage.setItem("yx-avatar", String(seed));
+    return seed;
+  } catch (err) {
+    return Math.floor(Math.random() * 1e6);
+  }
+}
+const state = {
+  surface: "app",
+  tab: "style",
+  cat: "all",
+  fcat: "all",
+  avatar: initialAvatar(),
+  view: null,
+  presetId: "paper",
+  mode: "style",
+  refId: null,
+  srcId: null,
+  phase: "form",
+  locked: false,
+  showRaw: false,
+  scoreId: null,
+  scorePhase: "board",
+  scoreBack: "board",
+  member: false,
+  plan: "month",
+  toast: "",
+  sheet: null,
+  strength: 64,
+  last: null
+};
+
+let seq = 0;
+function cancel() { seq += 1; }
+function arm(ms, fn) {
+  const id = ++seq;
+  setTimeout(() => { if (id === seq) fn(); }, ms);
+}
+function preset(id) { return PRESETS.find((p) => p.id === id); }
+function src(id) { return SRCS.find((s) => s.id === id); }
+function engineName(engine) { return engine === "filter" ? "滤镜复刻" : "模版复刻"; }
+
+function art(p, cls) {
+  const extra = p.id === "paper" ? "hide-notes" : "";
+  if (p.img) return `<img class="${cls || ""} ${extra}" src="${p.img}" alt="${p.name}">`;
+  return `<div class="swatch ${p.id}"><span>${p.mark}</span></div>`;
+}
+function thumb(p) {
+  return `<div class="thumb">${p.engine === "filter" ? gradePreview(p) : art(p, "")}</div>`;
+}
+
+const COLORS = { sand: "#F3DFA2", teal: "#7EBDC2", pink: "#EFE6DD", lilac: "#7EBDC2", terra: "#BB4430", mint: "#F3DFA2", ink: "#231F20" };
+function wavy(n, r, amp) {
+  const pts = [];
+  for (let i = 0; i < 120; i++) {
+    const t = (i / 120) * Math.PI * 2;
+    const rr = r + amp * Math.cos(n * t);
+    pts.push(`${(32 + rr * Math.sin(t)).toFixed(2)} ${(32 - rr * Math.cos(t)).toFixed(2)}`);
+  }
+  return `M${pts.join("L")}Z`;
+}
+const SHAPES = {
+  circle: '<circle cx="32" cy="32" r="27"/>',
+  squircle: '<rect x="6" y="7" width="52" height="50" rx="20"/>',
+  arch: '<path d="M8 57V32a24 24 0 0 1 48 0v25z"/>',
+  flower: `<path d="${wavy(8, 24, 4.2)}"/>`,
+  cookie: `<path d="${wavy(12, 26, 2.4)}"/>`,
+  tri: '<path d="M32 11 55 52H9Z" stroke-width="9" stroke-linejoin="round"/>',
+  hex: '<path d="M32 8 53 20v24L32 56 11 44V20Z" stroke-width="6" stroke-linejoin="round"/>'
+};
+const FACE_DY = { arch: 4, tri: 9 };
+const FACES = {
+  happy: '<path d="M20 31q4-5 8 0M36 31q4-5 8 0"/><path d="M27 39q5 5 10 0"/>',
+  calm: '<path d="M20 30q4 4.5 8 0M36 30q4 4.5 8 0"/><path d="M29 39q3 2.6 6 0"/>',
+  dots: '<circle cx="24" cy="31" r="2.8" fill="FC" stroke="none"/><circle cx="40" cy="31" r="2.8" fill="FC" stroke="none"/><path d="M28 39q4 3 8 0"/>',
+  googly: '<circle cx="24" cy="30" r="6.6" fill="#EFE6DD" stroke="none"/><circle cx="40" cy="30" r="6.6" fill="#EFE6DD" stroke="none"/><circle cx="26.2" cy="31" r="3" fill="FC" stroke="none"/><circle cx="42.2" cy="31" r="3" fill="FC" stroke="none"/><path d="M29 43q3 2 6 0"/>',
+  wow: '<circle cx="24" cy="30" r="2.8" fill="FC" stroke="none"/><circle cx="40" cy="30" r="2.8" fill="FC" stroke="none"/><ellipse cx="32" cy="41" rx="3.2" ry="3.8" fill="FC" stroke="none"/>',
+  wink: '<path d="M20 31q4-5 8 0"/><circle cx="40" cy="30" r="2.8" fill="FC" stroke="none"/><path d="M27 39q5 5 10 0"/>'
+};
+const MASCOTS = {
+  style: ["flower", "sand", "happy", true],
+  filter: ["arch", "teal", "calm"],
+  score: ["cookie", "pink", "googly"],
+  me: ["squircle", "lilac", "dots", true],
+  pay: ["flower", "sand", "wow"],
+  upload: ["cookie", "sand", "wow"],
+  tips: ["arch", "teal", "happy"],
+  sing: ["circle", "sand", "wow"],
+  fly: ["tri", "pink", "dots"],
+  comic: ["hex", "teal", "wink"],
+  paper: ["squircle", "ink", "calm"],
+  sun: ["flower", "terra", "happy"],
+  plain: ["circle", "lilac", "dots"],
+  "cat-海报": ["circle", "terra", "happy"],
+  "cat-漫画": ["hex", "teal", "wink"],
+  "cat-城市": ["tri", "pink", "dots"]
+};
+function mascot(spec, cls) {
+  const [shape, tone, faceName, cheeks] = typeof spec === "string" ? (MASCOTS[spec] || MASCOTS.style) : spec;
+  const body = COLORS[tone];
+  const fc = tone === "ink" || tone === "terra" ? "#F3DFA2" : "#231F20";
+  const dy = FACE_DY[shape] || 0;
+  const blush = cheeks ? `<g transform="translate(0 ${dy})" fill="#BB4430" opacity="0.4"><ellipse cx="17.5" cy="37" rx="3.6" ry="2.3"/><ellipse cx="46.5" cy="37" rx="3.6" ry="2.3"/></g>` : "";
+  const face = FACES[faceName].replaceAll("FC", fc);
+  return `<span class="mascot ${cls || ""}" aria-hidden="true"><svg viewBox="0 0 64 64"><g fill="${body}" stroke="${body}">${SHAPES[shape]}</g>${blush}<g transform="translate(0 ${dy})" fill="none" stroke="${fc}" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">${face}</g></svg></span>`;
+}
+function avatar(seed) {
+  const shapes = ["flower", "cookie", "circle", "squircle", "hex", "arch", "tri"];
+  const faces = ["happy", "calm", "dots", "googly", "wow", "wink"];
+  const grounds = ["sand", "teal", "terra", "ink"];
+  const bodies = ["sand", "teal", "pink", "terra"];
+  const pick = (list, k) => list[Math.floor(seed / k) % list.length];
+  const ground = pick(grounds, 1);
+  const body = [pick(bodies, 7), ...bodies].find((b) => b !== ground);
+  const spec = [pick(shapes, 13), body, pick(faces, 97), Math.floor(seed / 389) % 2 === 0];
+  return `<span class="v-avatar t-${ground}">${mascot(spec)}<button type="button" class="roll" data-act="avatar-roll" aria-label="换一个头像">↻</button></span>`;
+}
+function scoreFace(n) { return n >= 88 ? "happy" : n >= 85 ? "wink" : "calm"; }
+
+const CHEVRON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg>';
+function nav(title, backAct) {
+  if (backAct) {
+    return `<header class="v-nav"><button type="button" class="v-back" data-act="${backAct}" aria-label="返回">${CHEVRON}</button><h1 class="v-title">${title}</h1></header>`;
+  }
+  return `<header class="v-nav"><div class="v-tt"><h1 class="v-title">${title}</h1></div></header>`;
+}
+const FILTER_SAMPLE = "assets/filter-sample-fanho.jpg";
+function gradePreview(p) {
+  const dots = p.id === "paper" ? `<div class="dots"></div>` : "";
+  return `<div class="grade g-${p.id}">${dots}<img class="base" src="${FILTER_SAMPLE}" alt=""></div>`;
+}
+function presetVisual(p) { return p.engine === "filter" ? gradePreview(p) : art(p); }
+
+const STYLE_META = {
+  sing: { tags: ["海报"] },
+  fly: { tags: ["海报", "城市"] },
+  comic: { tags: ["漫画", "城市"] }
+};
+function styleCard(p, wide) {
+  const fresh = wide ? `<span class="v-badge new">本周上新</span>` : "";
+  return `<article class="v-card ${wide ? "wide" : ""}">
+    <button type="button" class="v-cover" data-act="open" data-id="${p.id}" aria-label="${p.name}">${art(p)}${fresh}</button>
+    <div class="v-row">
+      <p class="v-name" style="margin:0">${p.name}</p>
+      <button type="button" class="v-go t-terra" data-act="same" data-id="${p.id}">拍同款</button>
+    </div>
+  </article>`;
+}
+function templates() {
+  const cats = ["海报", "漫画", "城市"];
+  const chips = `<button type="button" class="v-cat plain ${state.cat === "all" ? "on" : ""}" data-act="cat" data-cat="all">全部</button>`
+    + cats.map((c) => `<button type="button" class="v-cat ${state.cat === c ? "on" : ""}" data-act="cat" data-cat="${c}">${c}</button>`).join("");
+  const list = PRESETS.filter((p) => p.engine === "style" && (state.cat === "all" || STYLE_META[p.id].tags.includes(state.cat)));
+  const order = state.cat === "all" ? ["comic", "sing", "fly"].map(preset) : list;
+  const cards = order.map((p, i) => styleCard(p, state.cat === "all" && i === 0)).join("");
+  return `${nav("模版")}<div class="v-cats">${chips}</div><div class="v-feed">${cards}</div>`;
+}
+
+const FILTER_CATS = {
+  cold: { tone: "teal", label: "冷调" },
+  warm: { tone: "sand", label: "暖调" },
+  film: { tone: "terra", label: "胶片" },
+  mono: { tone: "cream", label: "素色" }
+};
+function filters() {
+  const chips = `<button type="button" class="v-cat plain ${state.fcat === "all" ? "on" : ""}" data-act="fcat" data-cat="all">全部</button>`
+    + Object.entries(FILTER_CATS).map(([id, c]) => `<button type="button" class="v-cat ${state.fcat === id ? "on" : ""}" data-act="fcat" data-cat="${id}"><i class="sw t-${c.tone}"></i>${c.label}</button>`).join("");
+  const cards = PRESETS.filter((p) => p.engine === "filter" && (state.fcat === "all" || p.cat === state.fcat)).map((p) => {
+    const c = FILTER_CATS[p.cat];
+    return `<article class="v-fcard press t-${c.tone}">
+      <button type="button" class="v-hit" data-act="open" data-id="${p.id}" aria-label="${p.name}"></button>
+      <div class="v-fcopy"><span class="k">${c.label}</span><strong>${p.name}</strong></div>
+      <div class="v-fphoto">${gradePreview(p)}</div>
+      <button type="button" class="v-go" data-act="same" data-id="${p.id}">拍同款</button>
+    </article>`;
+  }).join("");
+  return `${nav("滤镜")}<div class="v-cats">${chips}</div><div class="v-flist">${cards}</div>`;
+}
+
+function chipRow(chips) {
+  return `<div class="v-chips">${chips.map((c) => `<span class="v-chip">${c}</span>`).join("")}</div>`;
+}
+function detail() {
+  const p = preset(state.presetId);
+  const chips = p[p.engine === "filter" ? "filterChips" : "styleChips"];
+  const note = p.engine === "filter"
+    ? "只调整色温、曲线和颗粒，不改人和场景。"
+    : "按这张的画风重画。脸按原片保留，结果带生成标识。";
+  return `${nav(p.name, "close-view")}
+    <div class="v-hero">${presetVisual(p)}<span class="v-badge">${engineName(p.engine)}</span></div>
+    <p class="v-lead">${p.blurb}</p>
+    ${chipRow(chips)}
+    <p class="v-fine">${note}</p>
+    <div class="v-cta"><button type="button" class="v-btn t-terra" data-act="use">拍同款</button></div>`;
+}
+
+function printer(ref, mine, locked) {
+  const left = state.member ? "∞" : (state.mode === "style" ? "01" : "03");
+  const refIn = ref
+    ? `<span class="win">${presetVisual(ref)}</span><span class="lab">${locked ? "已锁定 · " : ""}${ref.name}</span>`
+    : `<span class="win empty"><i class="v-plus">+</i><em>选配方</em></span><span class="lab">参照图</span>`;
+  const mineIn = mine
+    ? `<span class="win">${art(mine, "")}</span><span class="lab">${mine.name}</span>`
+    : `<span class="win empty"><i class="v-plus">+</i><em>从相册</em></span><span class="lab">我的原片</span>`;
+  const refTag = locked ? "span" : "button";
+  return `<div class="v-printer press t-sand">
+    <div class="v-pr-top">
+      <span class="stripe"><i class="t-terra"></i><i class="t-teal"></i><i class="t-ink"></i></span>
+      <span class="count"><small>FILM</small><b>${left}</b></span>
+      <span class="eye"></span>
+    </div>
+    <div class="v-pr-slots">
+      <${refTag} ${locked ? "" : 'type="button" data-act="sheet" data-sheet="ref"'} class="v-in film ${ref ? "on" : ""}">${refIn}</${refTag}>
+      <button type="button" data-act="sheet" data-sheet="src" class="v-in snap ${mine ? "on" : ""}">${mineIn}</button>
+    </div>
+    <div class="v-pr-slit"><i></i></div>
+  </div>`;
+}
+function shutter(ready, locked) {
+  const sub = state.member ? "会员不限张数" : (state.mode === "style" ? "本周还剩 1 张模版" : "本周还剩 3 张滤镜");
+  const wait = locked ? "先放进自己的照片" : "先把两张照片放进相机";
+  return `<button type="button" class="v-shutter t-terra ${ready ? "ready" : ""}" data-act="start">
+    <span class="knob"><i></i></span>
+    <span class="txt"><strong>${ready ? "咔嚓 · 印出来" : "按下快门"}</strong><small>${ready ? sub : wait}</small></span>
+    <span class="arr">→</span>
+  </button>`;
+}
+function form() {
+  const ref = preset(state.refId);
+  const mine = src(state.srcId);
+  if (state.locked && ref) {
+    return `${nav(ref.name, "close-view")}
+      ${printer(ref, mine, true)}
+      <p class="v-fine">参照已经锁在相机里，放进自己的照片就能印。</p>
+      <div class="v-cta">${shutter(!!mine, true)}</div>`;
+  }
+  const note = state.mode === "filter" ? "参照图提供颜色，原片里的内容保持原样。" : "参照图提供画风。生成结果会标明由人工智能生成。";
+  return `${nav("印制", "close-view")}
+    <div class="v-toggle wide">
+      <button type="button" data-act="mode" data-mode="style" class="${state.mode === "style" ? "on" : ""}">模版</button>
+      <button type="button" data-act="mode" data-mode="filter" class="${state.mode === "filter" ? "on" : ""}">滤镜</button>
+    </div>
+    ${printer(ref, mine, false)}
+    <p class="v-fine">${note}</p>
+    <div class="v-cta">${shutter(!!(ref && mine))}</div>`;
+}
+
+function parsing() {
+  const style = state.mode === "style";
+  const steps = style
+    ? ["媒介和套色", "构图和网点", "原片里的脸按住", "写到你的照片上"]
+    : ["色温和对比", "高光、阴影、颗粒", "肤色只对齐，不磨", "写到你的照片上"];
+  return `${nav(style ? "模版" : "滤镜", null, style ? "style" : "filter")}
+    <div class="v-parse">${mascot(style ? "style" : "filter")}
+      <h2>${style ? "正在读画风" : "正在读色调"}</h2>
+      <ul class="v-steps">${steps.map((s, i) => `<li class="${i < 3 ? "on" : ""}"><i></i>${s}</li>`).join("")}</ul>
+      <p class="v-fine" style="margin-top:14px">演示大约两秒。正式版滤镜目标 3 秒，风格目标 15 秒或给出排队位置。</p>
+    </div>`;
+}
+
+function frame() {
+  const mine = src(state.srcId);
+  const raw = state.showRaw ? "is-raw" : "";
+  if (state.mode === "filter") {
+    return `<div class="frame-art g-${state.refId} ${raw}"><img class="base" src="${mine.img}" alt="原片"><div class="dots"></div></div>`;
+  }
+  const map = { sing: "poster-sing", fly: "poster-fly", comic: "poster-comic", paper: "poster-day", sun: "poster-day", plain: "poster-day" };
+  const words = { sing: "开<br>唱", fly: "飞高<br>一点", comic: "勾线", paper: "慢慢<br>来", sun: "树影", plain: "直出" };
+  const cls = map[state.refId] || "poster-day";
+  const cut = state.refId === "fly" ? `<div class="cut fx"></div>` : "";
+  return `<div class="frame-art ${raw}"><div class="poster ${cls}">${cut}<img class="base" src="${mine.img}" alt="原片"><div class="dots fx"></div><div class="word fx">${words[state.refId] || "印上"}</div></div></div>`;
+}
+
+function result() {
+  const p = preset(state.refId);
+  const chips = state.mode === "filter" ? p.filterChips : p.styleChips;
+  const label = state.mode === "filter" ? "网点" : "风格强度";
+  return `${nav(p.name, "back-form")}
+    <div class="v-resultbar">
+      <span class="v-pill" style="background:var(--lift);color:var(--fg-2)">${state.mode === "filter" ? "滤镜" : "模版 · AI 生成"}</span>
+      <div class="v-toggle">
+        <button type="button" data-act="raw" data-raw="1" class="${state.showRaw ? "on" : ""}">原片</button>
+        <button type="button" data-act="raw" data-raw="0" class="${state.showRaw ? "" : "on"}">印后</button>
+      </div>
+    </div>
+    ${frame()}
+    <div class="v-slider">
+      <header><span>${label}</span><span>${state.strength}</span></header>
+      <input id="strength" type="range" min="0" max="100" value="${state.strength}" aria-label="${label}">
+    </div>
+    ${chipRow(chips)}
+    <p class="v-fine">${state.mode === "style" ? "演示为版式模拟。正式结果带生成标识。" : "演示为色调模拟。正式版可逐项关回原片。"}</p>
+    <div class="v-btns">
+      <button type="button" class="v-btn t-terra" data-act="copy">分享配方链接</button>
+      <button type="button" class="v-btn ghost" data-act="save">保存到相册</button>
+    </div>`;
+}
+
+function create() {
+  if (state.phase === "parsing") return parsing();
+  if (state.phase === "result") return result();
+  return form();
+}
+
+const SCORE_DATES = { street: "'26 10 21", wall: "'26 10 23", noodles: "'26 10 25", city: "'26 10 27", portrait: "'26 10 29" };
+const TAPES = ["sand", "teal", "terra"];
+function polaroid(id, i) {
+  const s = SCORES[id];
+  return `<button type="button" class="v-pol" data-act="score-card" data-id="${id}"><span class="tape t-${TAPES[i % TAPES.length]}"></span><span class="ph"><img src="${shot(id).img}" alt=""><span class="stamp">${SCORE_DATES[id]}</span></span><span class="cap"><b class="misreg">${s.n}</b><p>${s.verdict}</p></span></button>`;
+}
+function scoreBoard() {
+  const all = Object.values(SCORES).map((x) => x.n);
+  const avg = Math.round(all.reduce((a, b) => a + b, 0) / all.length);
+  const cards = SCORE_ORDER.map((id, i) => polaroid(id, i)).join("");
+  const blank = `<button type="button" class="v-pol new" data-act="score-new"><span class="ph"><i class="v-plus">+</i></span><span class="cap"><strong>再评一张</strong></span></button>`;
+  const dots = SCORE_ORDER.map(() => "<i></i>").join("");
+  return `${nav("评分")}
+    <div class="v-actions">
+      <button type="button" class="v-gate start press t-sand" data-act="score-new">
+        <span class="ring" aria-hidden="true"></span>
+        <span class="k">NEW ROLL</span>
+        <strong>开始评分</strong>
+        <span class="note">上传一张，看光和构图</span>
+      </button>
+      <button type="button" class="v-gate book press t-teal" data-act="score-tips">
+        <span class="k">FIELD NOTES</span>
+        <strong>拍照手册</strong>
+        <span class="note">教你拍照 tips</span>
+      </button>
+    </div>
+    <div class="v-sec"><h2>我的评分</h2><button type="button" class="v-all" data-act="score-all">全部 <em>${all.length}</em></button></div>
+    <div class="v-railwrap"><div class="v-rail">${blank}${cards}</div></div>
+    <div class="v-dots">${dots}</div>
+    <div class="v-mini">
+      <div><b>${avg}</b><span>平均分</span></div>
+      <div><b>${Math.max(...all)}</b><span>最高</span></div>
+      <div><b>光</b><span>最强的一项</span></div>
+    </div>`;
+}
+function scorePick() {
+  const shots = SRCS.map((item) => `<button type="button" data-act="score-pick" data-id="${item.id}" aria-label="上传${item.name}"><img src="${item.img}" alt=""></button>`).join("");
+  return `${nav("开始评分", "score-home")}
+    <button type="button" class="v-drop" data-act="drop-hint">${mascot("upload")}<strong>上传一张照片</strong><span>按光和构图打分，不看脸</span></button>
+    <div class="v-sec"><h2>最近照片</h2><small>点一张开始</small></div>
+    <div class="v-album">${shots}</div>`;
+}
+function scoreTips() {
+  const tips = [
+    ["sand", "光", "先找光", "侧光和逆光比正面闪光更有完成度。",
+      ["侧光：一半亮一半暗，立体感立刻上来。", "逆光：留发丝光或剪影，别再把曝光拉高冲掉。", "正午顶光最难拍，找树荫或墙边的侧光。"],
+      "评分里「光」这一项，主要看方向和层次，不看亮度。"],
+    ["teal", "构图", "别站正中", "主体靠近三分线，头顶别留一截空。",
+      ["眼睛或主体落在上三分线，画面会更稳。", "头顶留白别超过半个头，裁掉多余天空。", "地平线歪一点，比正中站桩更像路过。"],
+      "「构图」扣分最多的，通常是正中站桩和头顶空树荫。"],
+    ["cream", "色彩", "留一个冷色", "暖场景里留一点青，照片才不糊成一团。",
+      ["黄墙、夕阳、灯光：找一块青、灰或冷白顶住。", "整张同色系时，靠一个小反差，比再加滤镜管用。", "导出时别把饱和度全拉满，留一点灰更耐看。"],
+      "「色彩」看的是关系，不是够不够鲜艳。"],
+    ["terra", "表达", "别靠磨皮", "评分看的是光和构图，不是脸。",
+      ["毛衣、树影、桌沿这些纹理，比光滑脸更有信息。", "磨皮和美颜会抹掉细节，「技术」反而容易掉分。", "人可以虚一点，环境的边要清楚。"],
+      "评分不看脸。磨皮不能抬分，只会让照片变空。"]
+  ];
+  const cards = tips.map(([tone, dim, title, lead, points, foot]) => {
+    const list = points.map((p) => `<li>${p}</li>`).join("");
+    return `<article class="v-tip t-${tone}"><div class="head"><strong>${title}</strong><span class="dim">${dim}</span></div><p class="lead">${lead}</p><ul>${list}</ul><span class="foot">${foot}</span></article>`;
+  }).join("");
+  return `${nav("拍照手册", "score-home")}<p class="v-tip-lead">评分只看照片本身。下面四条是最容易拉分的地方，按顺序试就行。</p>${cards}`;
+}
+function scoreAll() {
+  const all = SCORE_ORDER.map((id) => SCORES[id].n);
+  const avg = Math.round(all.reduce((a, b) => a + b, 0) / all.length);
+  const shots = SCORE_ORDER.map((id) => {
+    const s = SCORES[id];
+    return `<button type="button" class="v-shot" data-act="score-open" data-id="${id}" data-from="all"><span class="im"><img src="${shot(id).img}" alt=""><span class="n">${s.n}</span><span class="stamp">${SCORE_DATES[id]}</span></span><p>${s.verdict}</p></button>`;
+  }).join("");
+  return `${nav("全部评分", "score-home")}
+    <div class="v-msum"><span>${all.length} 张</span><span>平均 ${avg}</span><span>最高 ${Math.max(...all)}</span></div>
+    <div class="v-masonry">${shots}</div>`;
+}
+function scoreDone() {
+  const s = SCORES[state.scoreId];
+  const mine = shot(state.scoreId);
+  const low = Math.min(...s.dims.map(([, n]) => n));
+  const bars = s.dims.map(([name, n]) => `<div class="v-bar ${n === low ? "low" : ""}"><b>${n}</b><i style="height:${Math.max(18, (n - 55) * 2.6)}px"></i><span>${name}</span></div>`).join("");
+  const advice = s.tips.map((t, i) => `<li><b>${i + 1}</b><span>${t}</span></li>`).join("");
+  return `${nav("评分结果", "score-back")}
+    <div class="v-photo" style="--ar:${mine.ar}"><img class="bg" src="${mine.img}" alt=""><img class="fg" src="${mine.img}" alt=""></div>
+    <div class="v-scorecard press t-terra"><b class="misreg">${s.n}</b><p>${s.verdict}</p>${mascot(["flower", "sand", scoreFace(s.n)])}</div>
+    <div class="v-panel"><h3>六个维度</h3><div class="v-bars">${bars}</div></div>
+    <ol class="v-advice">${advice}</ol>
+    <button type="button" class="v-btn t-sand" data-act="share-score">分享评分卡</button>`;
+}
+function score() {
+  if (state.scorePhase === "parsing") {
+    return `${nav("评分")}
+      <div class="v-parse">${mascot("score")}<h2>正在看光和构图</h2>
+        <ul class="v-steps"><li class="on"><i></i>不看脸</li><li class="on"><i></i>只看照片本身</li><li><i></i>写成能照做的建议</li></ul>
+      </div>`;
+  }
+  if (state.scorePhase === "tips") return scoreTips();
+  if (state.scorePhase === "pick") return scorePick();
+  if (state.scorePhase === "done") return scoreDone();
+  if (state.scorePhase === "all") return scoreAll();
+  return scoreBoard();
+}
+
+function pay() {
+  const month = state.plan === "month";
+  return `${nav("会员", "close-view")}
+    <div class="v-toggle wide">
+      <button type="button" data-act="plan" data-plan="month" class="${month ? "on" : ""}">连续包月</button>
+      <button type="button" data-act="plan" data-plan="year" class="${month ? "" : "on"}">连续包年</button>
+    </div>
+    <div class="v-planc press ${month ? "t-sand" : "t-teal"}">
+      <div class="k">${month ? "连续包月" : "连续包年 · 约 ¥10.7/月"}</div>
+      <b class="misreg">${month ? "¥16" : "¥128"}<small>${month ? " /月" : " /年"}</small></b>
+      <ul><li>滤镜正常使用不限次</li><li>模版每月 40 次</li><li>去掉营销角标，生成标识保留</li></ul>
+    </div>
+    <button type="button" class="v-btn t-terra" data-act="subscribe">${state.member ? "当前已是会员" : "订阅"}</button>
+    <p class="v-fine" style="margin-top:12px">演示不会扣款。模版加量 20 次 12 元。评分不收费。</p>`;
+}
+
+function me() {
+  const planLabel = state.member ? (state.plan === "month" ? "会员 · 包月" : "会员 · 包年") : "免费版";
+  const scored = Object.keys(SCORES).length;
+  const made = state.last ? 1 : 0;
+  const folder = (mode, tone, title, imgs, count) => `<button type="button" class="v-folder t-${tone}" data-act="folder" data-mode="${mode}"><span class="v-peek">${imgs.map((src) => `<img src="${src}" alt="">`).join("")}</span><strong>${title}</strong><em>${count}</em></button>`;
+  const lastStyle = state.last && state.last.mode === "style";
+  const lastFilter = state.last && state.last.mode === "filter";
+  return `${nav("我的")}
+    <div class="v-profile">
+      ${avatar(state.avatar)}
+      <div><strong>印相用户</strong><span class="plan-chip">${planLabel}</span></div>
+    </div>
+    <div class="v-stats">
+      <button type="button" class="v-stat" data-act="folder" data-mode="${state.last ? state.last.mode : "style"}"><b>${made}</b><span>本月印过</span></button>
+      <button type="button" class="v-stat" data-act="folder" data-mode="score"><b>${scored}</b><span>评分</span></button>
+      <button type="button" class="v-stat" data-act="open-pay"><b class="${state.member ? "" : "acc"}">${state.member ? "已开" : "¥16"}</b><span>${state.member ? "会员" : "开通会员"}</span></button>
+    </div>
+    <div class="v-sec"><h2>我的配方</h2></div>
+    <div class="v-folders">
+      ${folder("style", "sand", "模版", ["assets/cover-sing.jpg", "assets/cover-fly.jpg"], lastStyle ? "1 次" : "还没有")}
+      ${folder("filter", "teal", "滤镜", ["assets/filter-sample-fanho.jpg", "assets/src-street.jpg"], lastFilter ? "1 次" : "还没有")}
+      ${folder("score", "terra", "评分", ["assets/src-portrait.jpg", "assets/src-noodles.jpg"], scored + " 张")}
+    </div>
+    <div class="v-list">
+      <button type="button" data-act="open-pay">会员方案<span class="end">${state.member ? (state.plan === "month" ? "¥16/月" : "¥128/年") : "未订阅"}</span></button>
+      <button type="button" data-act="noop">原图保留<span class="end">24 小时</span></button>
+      <button type="button" data-act="noop">生成标识说明<span class="end">已开启</span></button>
+    </div>`;
+}
+
+function pickRow(item, act, kicker) {
+  return `<button type="button" class="pick" data-act="${act}" data-id="${item.id}">${thumb(item)}<span><strong>${item.name}</strong><span class="k">${kicker}</span></span></button>`;
+}
+function sheet() {
+  if (!state.sheet) return "";
+  const body = state.sheet === "ref"
+    ? `<h3>${state.mode === "style" ? "模版" : "滤镜"}</h3>${PRESETS.filter((p) => p.engine === state.mode).map((p) => pickRow(p, "pick-ref", state.mode === "style" ? "画风" : "色调")).join("")}`
+    : `<h3>示例原片</h3>${SRCS.map((s) => pickRow(s, "pick-src", "相册")).join("")}`;
+  return `<div class="sheet-scrim" data-act="close-sheet"></div><div class="sheet">${body}</div>`;
+}
+
+function clearToast() {
+  state.toast = "";
+  const g = document.getElementById("gtoast");
+  if (g) {
+    g.textContent = "";
+    g.hidden = true;
+  }
+}
+
+function icon(name) {
+  const paths = {
+    style: '<rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="M8 9h8M8 13h5"/>',
+    filter: '<path d="M4 8h16M4 16h16"/><circle cx="9" cy="8" r="2.2"/><circle cx="15" cy="16" r="2.2"/>',
+    score: '<circle cx="12" cy="12" r="7"/><path d="M12 8.5V12l2.5 2"/>',
+    me: '<circle cx="12" cy="9" r="3"/><path d="M6.5 18c1-2.2 2.8-3.3 5.5-3.3s4.5 1.1 5.5 3.3"/>'
+  };
+  return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7">${paths[name]}</svg>`;
+}
+function tabs() {
+  const plusOn = state.view === "create" && !state.locked;
+  const item = (id, label, extra) => `<button type="button" class="tab ${extra || ""} ${state.tab === id && !plusOn ? "on" : ""}" data-act="tab" data-tab="${id}"><span class="tic">${icon(id)}</span><span>${label}</span></button>`;
+  const blob = `<svg class="plus-blob" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#7EBDC2"/><circle cx="32" cy="32" r="22" fill="#231F20"/><circle cx="32" cy="32" r="19.5" fill="none" stroke="#F3DFA2" stroke-width="1.2" stroke-dasharray="1.6 2.4"/><g class="blades"><path d="M32 32 L47.00 32.00 A15 15 0 0 1 39.50 44.99 Z" fill="#2B4F57"/><path d="M32 32 L39.50 44.99 A15 15 0 0 1 24.50 44.99 Z" fill="#3D6E78"/><path d="M32 32 L24.50 44.99 A15 15 0 0 1 17.00 32.00 Z" fill="#2B4F57"/><path d="M32 32 L17.00 32.00 A15 15 0 0 1 24.50 19.01 Z" fill="#3D6E78"/><path d="M32 32 L24.50 19.01 A15 15 0 0 1 39.50 19.01 Z" fill="#2B4F57"/><path d="M32 32 L39.50 19.01 A15 15 0 0 1 47.00 32.00 Z" fill="#3D6E78"/></g><circle cx="32" cy="32" r="15" fill="none" stroke="#231F20" stroke-width="1.4"/><circle cx="32" cy="32" r="5" fill="#1A1718"/><circle cx="26.5" cy="26" r="3.2" fill="#EFE6DD" opacity="0.85"/><circle cx="37" cy="37.5" r="1.4" fill="#EFE6DD" opacity="0.5"/><circle cx="51" cy="14" r="3" fill="#BB4430"/></svg>`;
+  return item("style", "模版", "style-tab") + item("filter", "滤镜")
+    + `<button type="button" class="tab-main ${plusOn ? "on" : ""}" data-act="plus" aria-label="印制">${blob}<span>印制</span></button>`
+    + item("score", "评分") + item("me", "我的");
+}
+function screen() {
+  if (state.view === "detail") return detail();
+  if (state.view === "pay") return pay();
+  if (state.view === "create") return create();
+  if (state.tab === "filter") return filters();
+  if (state.tab === "score") return score();
+  if (state.tab === "me") return me();
+  return templates();
+}
+function phone() {
+  return `<div class="app-stage"><div class="phone"><div class="status"><span>9:41</span><span>印相</span></div><div class="screen">${screen()}</div>${sheet()}<nav class="tabbar">${tabs()}</nav></div></div>`;
+}
+
+function web() {
+  const tiles = ["paper", "sing", "fly"].map((id) => {
+    const p = preset(id);
+    return `<button type="button" class="poster-tile" data-act="open" data-id="${p.id}"><div class="art">${art(p)}<span class="pill">${engineName(p.engine)}</span></div><strong>${p.name}</strong><em class="fine">${p.blurb}</em></button>`;
+  }).join("");
+  const month = state.plan === "month";
+  return `
+    <div class="site">
+      <section class="hero">
+        <div>
+          <div class="kicker">YINXIANG · 印相</div>
+          <h1>同款<br>一次印上。</h1>
+        </div>
+        <div class="hero-side">
+          <p>给一张参照。</p>
+          <p>再给一张自己的。</p>
+          <p>色调留下，人不动。画风也能换。</p>
+          <div class="duo">
+            <button type="button" class="ink orange" data-act="try" data-id="paper" data-src="street">试滤镜</button>
+            <button type="button" class="ink ghost" style="color:#EFE6DD;border-color:rgba(239,230,221,.45)" data-act="try" data-id="sing" data-src="portrait">试模版</button>
+          </div>
+        </div>
+      </section>
+      <section class="split">
+        <div class="pane orange">
+          <h2>滤镜复刻</h2>
+          <p>读出色温、曲线、颗粒和光，写成一条可以关回去的调整。照片还是那张照片。</p>
+        </div>
+        <div class="pane blue">
+          <h2>模版复刻</h2>
+          <p>读出媒介、套色、网点和版式，按这个画风重画。脸按原片留住。角上标明人工智能生成。</p>
+        </div>
+      </section>
+      <section class="wall">
+        <h2>先从一个配方开始。</h2>
+        <p class="lead">没有参照图也可以。这些封面来自视觉参照，名字是我们自己的。</p>
+        <div class="grid3">${tiles}</div>
+      </section>
+      <section class="band">
+        <div class="score-layout">
+          <div class="score-card">
+            <img src="assets/src-portrait.jpg" alt="窗边">
+            <div class="pad"><div class="score-num" style="font-size:56px">88</div><p class="lead">侧光是这张照片的全部理由。</p></div>
+          </div>
+          <div>
+            <h2>评分说的是照片，不是脸。</h2>
+            <p>光、构图、色彩、主体、技术、表达。三条建议要能照着做。这个功能免费，用来被分享。</p>
+            <button type="button" class="btn" style="max-width:240px" data-act="goto-score">给示例片打分</button>
+          </div>
+        </div>
+      </section>
+      <section class="band" id="price">
+        <h2>月费对齐修图软件。</h2>
+        <div class="modes" style="max-width:280px">
+          <button type="button" data-act="plan" data-plan="month" class="${month ? "on" : ""}">包月</button>
+          <button type="button" data-act="plan" data-plan="year" class="${month ? "" : "on"}">包年</button>
+        </div>
+        <div class="prices">
+          <div class="price">
+            <div>免费</div>
+            <b>¥0</b>
+            <ul><li>滤镜每周 3 次</li><li>风格每周 1 次</li><li>评分每天 20 次</li></ul>
+          </div>
+          <div class="price member">
+            <div>印相会员</div>
+            <b>${month ? "¥16" : "¥128"}</b>
+            <ul><li>滤镜正常使用不限次</li><li>风格生成每月 40 次</li><li>去掉营销角标，标识保留</li></ul>
+            <button type="button" class="btn orange" data-act="subscribe">用这个方案继续</button>
+          </div>
+        </div>
+      </section>
+      <footer class="site-foot">印相原型 · 色调取自三张参照海报 · 风格生成在正式产品中按《人工智能生成合成内容标识办法》标识 · 此页不会扣款</footer>
+    </div>`;
+}
+
+function hint() {
+  if (state.surface === "web") return "网站保留海报语气。应用里改成工具结构。";
+  if (state.view === "create" && state.locked) return "拍同款只差自己的照片。";
+  if (state.tab === "score") return "最新一张摊开，其余叠在后面。";
+  if (state.tab === "filter") return "色块卡片，右边是同一张街景的调色。";
+  if (state.tab === "me") return "资料、数据和按类型分开的配方。";
+  return "上新放大，其余双列，拍同款跟在名字旁边。";
+}
+
+function render() {
+  document.getElementById("hint").textContent = hint();
+  document.getElementById("stage").innerHTML = state.surface === "web" ? web() : phone();
+  document.querySelectorAll(".seg button").forEach((b) => b.classList.toggle("on", b.dataset.surface === state.surface));
+  document.documentElement.style.setProperty("--strength", String(state.strength));
+  let g = document.getElementById("gtoast");
+  if (!g) {
+    g = document.createElement("div");
+    g.id = "gtoast";
+    g.className = "gtoast";
+    document.body.appendChild(g);
+  }
+  g.textContent = state.toast;
+  g.hidden = !state.toast;
+  setupRail();
+}
+
+let railDragged = false;
+const railGeo = new WeakMap();
+function railMeasure(rail) {
+  const cards = [...rail.children];
+  const geo = { cards, mids: cards.map((c) => c.offsetLeft + c.offsetWidth / 2), w: cards[0] ? cards[0].offsetWidth : 1, half: rail.clientWidth / 2 };
+  railGeo.set(rail, geo);
+  return geo;
+}
+function railIndex(rail) {
+  const g = railGeo.get(rail) || railMeasure(rail);
+  const mid = rail.scrollLeft + g.half;
+  let best = 0;
+  g.mids.forEach((m, i) => { if (Math.abs(m - mid) < Math.abs(g.mids[best] - mid)) best = i; });
+  return best;
+}
+function railCenter(rail) {
+  const g = railGeo.get(rail) || railMeasure(rail);
+  return g.cards[railIndex(rail)] || null;
+}
+function railTo(rail, card, smooth) {
+  const left = card.offsetLeft - (rail.clientWidth - card.offsetWidth) / 2;
+  rail.scrollTo({ left, behavior: smooth ? "smooth" : "auto" });
+}
+function railPaint(rail) {
+  const g = railGeo.get(rail) || railMeasure(rail);
+  const mid = rail.scrollLeft + g.half;
+  g.cards.forEach((c, i) => {
+    const d = (g.mids[i] - mid) / g.w;
+    const k = Math.max(-2, Math.min(2, d));
+    c.style.transform = `translate(${-k * 4}%, ${Math.abs(k) * 22}px) rotate(${k * 7}deg)`;
+    c.style.zIndex = String(10 - Math.round(Math.abs(d) * 3));
+  });
+  const ci = railIndex(rail);
+  if (g.last === ci) return;
+  g.last = ci;
+  document.querySelectorAll(".v-dots i").forEach((dot, i) => dot.classList.toggle("on", i + 1 === ci));
+  const center = g.cards[ci];
+  if (center && center.dataset.act === "score-card") state.scoreId = center.dataset.id;
+}
+function setupRail() {
+  const rail = document.querySelector(".v-rail");
+  if (!rail) return;
+  railMeasure(rail);
+  const start = [...rail.children].find((c) => c.dataset.id === (state.scoreId || SCORE_ORDER[0]));
+  if (start) railTo(rail, start, false);
+  railPaint(rail);
+  let queued = false;
+  rail.addEventListener("scroll", () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => { queued = false; railPaint(rail); });
+  }, { passive: true });
+  rail.addEventListener("pointerdown", (e) => {
+    if (e.pointerType !== "mouse") return;
+    railDrag = { rail, x0: e.clientX, s0: rail.scrollLeft };
+    railDragged = false;
+  });
+}
+let railDrag = null;
+window.addEventListener("resize", () => {
+  const rail = document.querySelector(".v-rail");
+  if (rail) { railMeasure(rail); railPaint(rail); }
+});
+window.addEventListener("pointermove", (e) => {
+  if (!railDrag) return;
+  const dx = e.clientX - railDrag.x0;
+  if (Math.abs(dx) > 5 && !railDragged) {
+    railDragged = true;
+    railDrag.rail.classList.add("drag");
+  }
+  if (railDragged) railDrag.rail.scrollLeft = railDrag.s0 - dx;
+});
+window.addEventListener("pointerup", () => {
+  if (!railDrag) return;
+  const rail = railDrag.rail;
+  railDrag = null;
+  if (!railDragged) return;
+  rail.classList.remove("drag");
+  const c = railCenter(rail);
+  if (c) railTo(rail, c, true);
+  setTimeout(() => { railDragged = false; }, 0);
+});
+
+document.body.addEventListener("click", (e) => {
+  const el = e.target.closest("[data-act]");
+  if (!el) return;
+  const act = el.dataset.act;
+  if (act === "noop") {
+    state.toast = "正式版这里会打开说明。演示先留在这一页。";
+    arm(1800, () => { clearToast(); });
+    render();
+    return;
+  }
+  cancel();
+  if (act === "surface") {
+    state.surface = el.dataset.surface;
+    window.scrollTo(0, 0);
+  } else if (act === "tab") {
+    state.tab = el.dataset.tab;
+    state.view = null;
+    state.sheet = null;
+    state.locked = false;
+  } else if (act === "plus") {
+    state.locked = false;
+    state.mode = state.tab === "filter" ? "filter" : "style";
+    state.tab = state.mode;
+    state.view = "create";
+    state.phase = "form";
+    state.refId = null;
+    state.srcId = null;
+    state.sheet = null;
+  } else if (act === "same" || act === "use") {
+    const p = preset(act === "same" ? el.dataset.id : state.presetId);
+    state.refId = p.id;
+    state.mode = p.engine;
+    state.tab = p.engine;
+    state.view = "create";
+    state.phase = "form";
+    state.locked = true;
+    state.srcId = null;
+    state.sheet = null;
+  } else if (act === "open") {
+    state.surface = "app";
+    state.view = "detail";
+    state.presetId = el.dataset.id;
+    state.tab = preset(el.dataset.id).engine;
+  } else if (act === "close-view") {
+    state.view = null;
+    state.sheet = null;
+    state.locked = false;
+  } else if (act === "mode") {
+    state.mode = el.dataset.mode;
+    state.tab = state.mode;
+    if (state.refId && preset(state.refId).engine !== state.mode) state.refId = null;
+    if (state.phase === "result") state.phase = "form";
+  } else if (act === "sheet") {
+    state.sheet = el.dataset.sheet;
+  } else if (act === "close-sheet") {
+    state.sheet = null;
+  } else if (act === "pick-ref") {
+    state.refId = el.dataset.id;
+    state.mode = preset(el.dataset.id).engine;
+    state.tab = state.mode;
+    state.sheet = null;
+  } else if (act === "pick-src") {
+    state.srcId = el.dataset.id;
+    state.sheet = null;
+  } else if (act === "start") {
+    if (!state.refId || !state.srcId) {
+      state.toast = state.locked && state.refId ? "先上传自己的照片。" : "先放入参照图和自己的原片。";
+      arm(1800, () => { clearToast(); });
+    } else {
+      state.sheet = null;
+      state.phase = "parsing";
+      const refId = state.refId;
+      const srcId = state.srcId;
+      const mode = state.mode;
+      arm(1700, () => {
+        state.phase = "result";
+        state.showRaw = false;
+        state.last = { refId, srcId, mode };
+        render();
+      });
+    }
+  } else if (act === "back-form") {
+    state.phase = "form";
+  } else if (act === "raw") {
+    state.showRaw = el.dataset.raw === "1";
+  } else if (act === "copy") {
+    const link = "https://yinxiang.app/r/" + state.refId;
+    if (navigator.clipboard) navigator.clipboard.writeText(link).catch(() => {});
+    state.toast = "配方链接已复制（演示）：" + link;
+    arm(2200, () => { clearToast(); });
+  } else if (act === "save") {
+    state.toast = state.member ? "已保存到相册（演示）。" : "已保存。免费档会带印相角标，会员去掉。";
+    arm(2000, () => { clearToast(); });
+  } else if (act === "score-pick") {
+    state.scoreId = el.dataset.id;
+    state.scoreBack = "board";
+    state.scorePhase = "parsing";
+    const id = state.scoreId;
+    arm(1400, () => { state.scorePhase = "done"; state.scoreId = id; render(); });
+  } else if (act === "score-reset" || act === "score-home") {
+    state.scorePhase = "board";
+  } else if (act === "score-new") {
+    state.scorePhase = "pick";
+  } else if (act === "score-tips") {
+    state.scorePhase = "tips";
+  } else if (act === "score-open") {
+    state.scoreId = el.dataset.id;
+    state.scoreBack = el.dataset.from || "board";
+    state.scorePhase = "done";
+  } else if (act === "score-card") {
+    if (railDragged) return;
+    const rail = el.closest(".v-rail");
+    if (rail && railCenter(rail) !== el) {
+      railTo(rail, el, true);
+      return;
+    }
+    state.scoreId = el.dataset.id;
+    state.scoreBack = "board";
+    state.scorePhase = "done";
+  } else if (act === "score-all") {
+    state.scorePhase = "all";
+  } else if (act === "score-back") {
+    state.scorePhase = state.scoreBack || "board";
+  } else if (act === "share-score") {
+    state.toast = "评分卡已按 3:4 准备好（演示），不评脸。";
+    arm(2000, () => { clearToast(); });
+  } else if (act === "open-pay") {
+    state.view = "pay";
+  } else if (act === "plan") {
+    state.plan = el.dataset.plan;
+  } else if (act === "subscribe") {
+    state.member = true;
+    state.toast = "演示已记下" + (state.plan === "month" ? "连续包月 16 元" : "连续包年 128 元") + "，没有扣款。";
+    state.view = null;
+    state.tab = "me";
+    state.surface = "app";
+    arm(2200, () => { clearToast(); });
+  } else if (act === "try") {
+    state.surface = "app";
+    state.refId = el.dataset.id;
+    state.srcId = el.dataset.src;
+    state.mode = preset(el.dataset.id).engine;
+    state.tab = state.mode;
+    state.view = "create";
+    state.phase = "form";
+    state.locked = true;
+    window.scrollTo(0, 0);
+  } else if (act === "goto-score") {
+    state.surface = "app";
+    state.tab = "score";
+    state.view = null;
+    state.scorePhase = "board";
+    window.scrollTo(0, 0);
+  } else if (act === "reopen") {
+    state.mode = state.last.mode;
+    state.tab = state.mode;
+    state.view = "create";
+    state.phase = "result";
+    state.locked = true;
+    state.refId = state.last.refId;
+    state.srcId = state.last.srcId;
+  } else if (act === "score-front") {
+    state.scoreId = el.dataset.id;
+  } else if (act === "avatar-roll") {
+    state.avatar = Math.floor(Math.random() * 1e6);
+    try { localStorage.setItem("yx-avatar", String(state.avatar)); } catch (err) {}
+  } else if (act === "cat") {
+    state.cat = el.dataset.cat;
+  } else if (act === "fcat") {
+    state.fcat = el.dataset.cat;
+  } else if (act === "drop-hint") {
+    state.toast = "演示里直接点下面的照片。正式版这里会打开相册。";
+    arm(1800, () => { clearToast(); });
+  } else if (act === "folder") {
+    const mode = el.dataset.mode;
+    if (mode === "score") {
+      state.tab = "score";
+      state.view = null;
+      state.scorePhase = "board";
+    } else if (state.last && state.last.mode === mode) {
+      state.mode = mode;
+      state.tab = mode;
+      state.view = "create";
+      state.phase = "result";
+      state.locked = true;
+      state.refId = state.last.refId;
+      state.srcId = state.last.srcId;
+    } else {
+      state.tab = mode;
+      state.view = null;
+    }
+  } else if (act === "reopen-score") {
+    state.tab = "score";
+    state.scorePhase = "done";
+    state.view = null;
+  }
+  render();
+});
+
+document.body.addEventListener("input", (e) => {
+  if (e.target.id !== "strength") return;
+  state.strength = Number(e.target.value);
+  document.documentElement.style.setProperty("--strength", String(state.strength));
+  const label = e.target.previousElementSibling;
+  if (label && label.querySelector) {
+    const spans = e.target.parentElement.querySelectorAll("header span");
+    if (spans[1]) spans[1].textContent = String(state.strength);
+  }
+});
+
+window.__yx = { state, render };
+render();
+</script>
+</body>
+</html>
